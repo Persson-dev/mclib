@@ -6,3084 +6,3227 @@
 
 #include <iostream>
 
-namespace {
-
-template <typename T>
-class FixedPointNumber {
-private:
-    T m_IntRep;
-    
-public:
-    FixedPointNumber() : m_IntRep(0) { }
-    FixedPointNumber(T intRep) : m_IntRep(intRep) { }
-    
-    float GetFloat() const { 
-        return (float)(m_IntRep >> 5) + (m_IntRep & 31) / 32.0f;
-    }
-
-    friend mc::DataBuffer& operator>>(mc::DataBuffer& in, FixedPointNumber<s8>& fpn);
-    friend mc::DataBuffer& operator>>(mc::DataBuffer& in, FixedPointNumber<s32>& fpn);
-};
-
-mc::DataBuffer& operator>>(mc::DataBuffer& in, FixedPointNumber<s8>& fpn) {
-    return in >> fpn.m_IntRep;
-}
+namespace{
 
-mc::DataBuffer& operator>>(mc::DataBuffer& in, FixedPointNumber<s32>& fpn) {
-    return in >> fpn.m_IntRep;
-}
+	template <typename T>
+	class FixedPointNumber{
+	private:
+		T m_IntRep;
 
-}
+	public:
+		FixedPointNumber(): m_IntRep(0){}
+		FixedPointNumber(T intRep): m_IntRep(intRep){}
 
-namespace mc {
-namespace protocol {
-namespace packets {
+		float GetFloat() const{
+			return (float)(m_IntRep >> 5) + (m_IntRep & 31) / 32.0f;
+		}
 
-void Packet::SetConnection(core::Connection* connection) {
-    m_Connection = connection;
-}
-core::Connection* Packet::GetConnection() {
-    return m_Connection;
-}
+		friend mc::DataBuffer& operator>>(mc::DataBuffer& in, FixedPointNumber<s8>& fpn);
+		friend mc::DataBuffer& operator>>(mc::DataBuffer& in, FixedPointNumber<s32>& fpn);
+	};
+
+	mc::DataBuffer& operator>>(mc::DataBuffer& in, FixedPointNumber<s8>& fpn){
+		return in >> fpn.m_IntRep;
+	}
 
-namespace in {
+	mc::DataBuffer& operator>>(mc::DataBuffer& in, FixedPointNumber<s32>& fpn){
+		return in >> fpn.m_IntRep;
+	}
 
-// Play packets
-SpawnObjectPacket::SpawnObjectPacket() {
-    
 }
 
-bool SpawnObjectPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
+namespace mc{
+	namespace protocol{
+		namespace packets{
 
-    data >> eid;
-    m_EntityId = eid.GetInt();
+			void Packet::SetConnection(core::Connection* connection){
+				m_Connection = connection;
+			}
+			core::Connection* Packet::GetConnection(){
+				return m_Connection;
+			}
 
-    data >> m_UUID;
-    data >> m_Type;
+			namespace in{
 
-    double x, y, z;
+				// Play packets
+				SpawnObjectPacket::SpawnObjectPacket(){
 
-    data >> x >> y >> z;
+				}
 
-    m_Position = Vector3f((float)x, (float)y, (float)z);
+				bool SpawnObjectPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
 
-    data >> m_Pitch >> m_Yaw;
+					data >> eid;
+					m_EntityId = eid.GetInt();
 
-    data >> m_Data;
-    data >> m_Velocity.x >> m_Velocity.y >> m_Velocity.z;
+					data >> m_UUID;
+					data >> m_Type;
 
-    return true;
-}
+					double x, y, z;
 
-void SpawnObjectPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					data >> x >> y >> z;
 
+					m_Position = Vector3f((float)x, (float)y, (float)z);
 
-SpawnExperienceOrbPacket::SpawnExperienceOrbPacket() {
-    
-}
+					data >> m_Pitch >> m_Yaw;
 
-bool SpawnExperienceOrbPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
-    double x, y, z;
+					data >> m_Data;
+					data >> m_Velocity.x >> m_Velocity.y >> m_Velocity.z;
 
-    data >> eid >> x >> y >> z >> m_Count;
+					return true;
+				}
 
-    m_EntityId = eid.GetInt();
-    m_Position.x = x;
-    m_Position.y = y;
-    m_Position.z = z;
+				void SpawnObjectPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    return true;
-}
 
-void SpawnExperienceOrbPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				SpawnExperienceOrbPacket::SpawnExperienceOrbPacket(){
 
-SpawnGlobalEntityPacket::SpawnGlobalEntityPacket() {
-    
-}
+				}
 
-bool SpawnGlobalEntityPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
-    double x, y, z;
+				bool SpawnExperienceOrbPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
+					double x, y, z;
 
-    data >> eid >> m_Type;
+					data >> eid >> x >> y >> z >> m_Count;
 
-    data >> x >> y >> z;
-    m_Position = Vector3d(x, y, z);
+					m_EntityId = eid.GetInt();
+					m_Position.x = x;
+					m_Position.y = y;
+					m_Position.z = z;
 
-    return true;
-}
+					return true;
+				}
 
-void SpawnGlobalEntityPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				void SpawnExperienceOrbPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
+				SpawnGlobalEntityPacket::SpawnGlobalEntityPacket(){
 
-SpawnMobPacket::SpawnMobPacket() : InboundPacket(), m_Metadata(m_ProtocolVersion) {
-    
-}
+				}
 
-bool SpawnMobPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt entityId, type;
+				bool SpawnGlobalEntityPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
+					double x, y, z;
 
-    m_Metadata.SetProtocolVersion(m_ProtocolVersion);
+					data >> eid >> m_Type;
 
-    data >> entityId;
-    m_EntityId = entityId.GetInt();
-    data >> m_UUID;
+					data >> x >> y >> z;
+					m_Position = Vector3d(x, y, z);
 
-    data >> type;
-    m_Type = type.GetInt();
+					return true;
+				}
 
-    double x, y, z;
-    data >> x >> y >> z;
-    m_Position = Vector3d(x, y, z);
+				void SpawnGlobalEntityPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    data >> m_Yaw;
-    data >> m_Pitch;
-    data >> m_HeadPitch;
 
-    short vx, vy, vz;
-    data >> vx >> vy >> vz;
-    m_Velocity = Vector3s(vx, vy, vz);
+				SpawnMobPacket::SpawnMobPacket(): InboundPacket(), m_Metadata(m_ProtocolVersion){
 
-    if (GetProtocolVersion() < Version::Minecraft_1_15_2) {
-      data >> m_Metadata;
-    }
+				}
 
-    return true;
-}
+				bool SpawnMobPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt entityId, type;
 
-void SpawnMobPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					m_Metadata.SetProtocolVersion(m_ProtocolVersion);
 
-SpawnPaintingPacket::SpawnPaintingPacket() {
-    
-}
+					data >> entityId;
+					m_EntityId = entityId.GetInt();
+					data >> m_UUID;
 
-bool SpawnPaintingPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
-    MCString title;
-    Position position;
-    u8 direction;
-
-    data >> eid >> m_UUID;
-    
-    if (m_ProtocolVersion >= protocol::Version::Minecraft_1_13_2) {
-        VarInt titleId;
-
-        data >> titleId;
-
-        static const std::string paintingNames[] = {
-             "minecraft:kebab", "minecraft:aztec", "minecraft:alban", "minecraft:aztec2",
-             "minecraft:bomb", "minecraft:plant", "minecraft:wasteland", "minecraft:pool",
-             "minecraft:courbet", "minecraft:sea", "minecraft:sunset", "minecraft:creebet",
-             "minecraft:wanderer", "minecraft:graham", "minecraft:match", "minecraft:bust",
-             "minecraft:stage", "minecraft:void", "minecraft:skull_and_roses", "minecraft:wither",
-             "minecraft:fighters", "minecraft:pointer", "minecraft:pigscene", "minecraft:burning_skull",
-             "minecraft:skeleton", "minecraft:donkey_kong"
-        };
-
-        title = paintingNames[titleId.GetInt()];
-    } else {
-        data >> title;
-    }
-
-    data >> position >> direction;
-
-    m_EntityId = eid.GetInt();
-    m_Title = title.GetUTF16();
-    m_Position.x = position.GetX();
-    m_Position.y = position.GetY();
-    m_Position.z = position.GetZ();
-    m_Direction = (Direction)direction;
-
-    return true;
-}
+					data >> type;
+					m_Type = type.GetInt();
 
-void SpawnPaintingPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					double x, y, z;
+					data >> x >> y >> z;
+					m_Position = Vector3d(x, y, z);
 
-SpawnPlayerPacket::SpawnPlayerPacket() : InboundPacket(), m_Metadata(m_ProtocolVersion) {
+					data >> m_Yaw;
+					data >> m_Pitch;
+					data >> m_HeadPitch;
 
-}
+					short vx, vy, vz;
+					data >> vx >> vy >> vz;
+					m_Velocity = Vector3s(vx, vy, vz);
 
-bool SpawnPlayerPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
+					if (GetProtocolVersion() < Version::Minecraft_1_15_2){
+						data >> m_Metadata;
+					}
 
-    m_Metadata.SetProtocolVersion(m_ProtocolVersion);
+					return true;
+				}
 
-    data >> eid;
-    m_EntityId = eid.GetInt();
+				void SpawnMobPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    data >> m_UUID;
+				SpawnPaintingPacket::SpawnPaintingPacket(){
 
-    double x, y, z;
-    data >> x >> y >> z;
+				}
 
-    m_Position = Vector3d(x, y, z);
+				bool SpawnPaintingPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
+					MCString title;
+					Position position;
+					u8 direction;
 
-    data >> m_Yaw;
-    data >> m_Pitch;
+					data >> eid >> m_UUID;
 
-    if (GetProtocolVersion() < Version::Minecraft_1_15_2) {
-      data >> m_Metadata;
-    }
-    return true;
-}
+					if (m_ProtocolVersion >= protocol::Version::Minecraft_1_13_2){
+						VarInt titleId;
 
-void SpawnPlayerPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+						data >> titleId;
 
-AnimationPacket::AnimationPacket() {
+						static const std::string paintingNames[] = {
+							"minecraft:kebab", "minecraft:aztec", "minecraft:alban", "minecraft:aztec2",
+							"minecraft:bomb", "minecraft:plant", "minecraft:wasteland", "minecraft:pool",
+							"minecraft:courbet", "minecraft:sea", "minecraft:sunset", "minecraft:creebet",
+							"minecraft:wanderer", "minecraft:graham", "minecraft:match", "minecraft:bust",
+							"minecraft:stage", "minecraft:void", "minecraft:skull_and_roses", "minecraft:wither",
+							"minecraft:fighters", "minecraft:pointer", "minecraft:pigscene", "minecraft:burning_skull",
+							"minecraft:skeleton", "minecraft:donkey_kong"
+						};
 
-}
+						title = paintingNames[titleId.GetInt()];
+					}
+					else{
+						data >> title;
+					}
 
-bool AnimationPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
+					data >> position >> direction;
 
-    data >> eid;
+					m_EntityId = eid.GetInt();
+					m_Title = title.GetUTF16();
+					m_Position.x = position.GetX();
+					m_Position.y = position.GetY();
+					m_Position.z = position.GetZ();
+					m_Direction = (Direction)direction;
 
-    m_EntityId = eid.GetInt();
+					return true;
+				}
 
-    u8 anim;
-    data >> anim;
+				void SpawnPaintingPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    m_Animation = (Animation)anim;
-    return true;
-}
+				SpawnPlayerPacket::SpawnPlayerPacket(): InboundPacket(), m_Metadata(m_ProtocolVersion){
 
-void AnimationPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				}
 
-StatisticsPacket::StatisticsPacket() {
+				bool SpawnPlayerPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
 
-}
+					m_Metadata.SetProtocolVersion(m_ProtocolVersion);
 
-bool StatisticsPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt count;
-    data >> count;
-
-    if (m_ProtocolVersion >= Version::Minecraft_1_13_2) {
-        for (s32 i = 0; i < count.GetInt(); ++i) {
-            VarInt categoryId;
-            VarInt statisticId;
-            VarInt value;
-
-            data >> categoryId >> statisticId >> value;
-
-            // Custom statistic
-            if (statisticId.GetInt() == 8) {
-                static const std::wstring statMap[] = {
-                    L"minecraft.leave_game", L"minecraft.play_one_minute", L"minecraft.time_since_death", L"minecraft.sneak_Time",
-                    L"minecraft.walk_one_cm", L"minecraft.crouch_one_cm", L"minecraft.sprint_one_cm", L"minecraft.swim_one_cm",
-                    L"minecraft.fall_one_cm", L"minecraft.climb_one_cm", L"minecraft.fly_one_cm", L"minecraft.dive_one_cm",
-                    L"minecraft.minecart_one_cm", L"minecraft.boat_one_cm", L"minecraft.pig_one_cm", L"minecraft.horse_one_cm",
-                    L"minecraft.aviate_one_cm", L"minecraft.jump", L"minecraft.drop", L"minecraft.damage_dealt", L"minecraft.damage_taken",
-                    L"minecraft.deaths", L"minecraft.mob_kills", L"minecraft.animals_bred", L"minecraft.player_kills", L"minecraft.fish_caught",
-                    L"minecraft.talked_to_villager", L"minecraft.traded_with_villager", L"minecraft.eat_cake_slice", L"minecraft.fill_cauldron",
-                    L"minecraft.use_cauldron", L"minecraft.clean_armor", L"minecraft.clean_banner", L"minecraft.interact_with_brewingstand",
-                    L"minecraft.interact_with_beacon", L"minecraft.inspect_dropper", L"minecraft.inspect_hopper", L"minecraft.inspect_dispenser",
-                    L"minecraft.play_noteblock", L"minecraft.tune_noteblock", L"minecraft.pot_flower", L"minecraft.trigger_trapped_chest",
-                    L"minecraft.open_enderchest", L"minecraft.enchant_item", L"minecraft.play_record", L"minecraft.interact_with_furnace",
-                    L"minecraft.interact_with_crafting_table", L"minecraft.open_chest", L"minecraft.sleep_in_bed", L"minecraft.open_shulker_box"
-                };
-
-                m_Statistics[statMap[statisticId.GetInt()]] = value.GetInt();
-            }
-        }
-    } else {
-        for (s32 i = 0; i < count.GetInt(); ++i) {
-            MCString name;
-            VarInt value;
-
-            data >> name;
-            data >> value;
-
-            m_Statistics[name.GetUTF16()] = value.GetInt();
-        }
-    }
-
-    return true;
-}
+					data >> eid;
+					m_EntityId = eid.GetInt();
 
-void StatisticsPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					data >> m_UUID;
 
-AdvancementsPacket::AdvancementsPacket() {
+					double x, y, z;
+					data >> x >> y >> z;
 
-}
+					m_Position = Vector3d(x, y, z);
 
-bool AdvancementsPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_Reset;
+					data >> m_Yaw;
+					data >> m_Pitch;
 
-    VarInt mappingSize;
+					if (GetProtocolVersion() < Version::Minecraft_1_15_2){
+						data >> m_Metadata;
+					}
+					return true;
+				}
 
-    data >> mappingSize;
+				void SpawnPlayerPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    for (s32 i = 0; i < mappingSize.GetInt(); ++i) {
-        MCString key;
-        Advancement advancement;
+				AnimationPacket::AnimationPacket(){
 
-        data >> key;
+				}
 
-        bool hasParent;
-        data >> hasParent;
+				bool AnimationPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
 
-        if (hasParent) {
-            MCString parent;
-            data >> parent;
-            advancement.parentId = parent.GetUTF16();
-        }
+					data >> eid;
 
-        bool hasDisplay;
-        data >> hasDisplay;
-        if (hasDisplay) {
-            MCString title, description;
-            data >> title >> description;
+					m_EntityId = eid.GetInt();
 
-            advancement.display.title = title.GetUTF16();
-            advancement.display.description = description.GetUTF16();
+					u8 anim;
+					data >> anim;
 
-            advancement.display.icon.Deserialize(data, m_ProtocolVersion);
+					m_Animation = (Animation)anim;
+					return true;
+				}
 
-            VarInt frameType;
-            data >> frameType;
+				void AnimationPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-            advancement.display.frameType = (FrameType)frameType.GetInt();
-            data >> advancement.display.flags;
+				StatisticsPacket::StatisticsPacket(){
 
-            if ((advancement.display.flags & (s32)Flags::BackgroundTexture) != 0) {
-                MCString texture;
-                data >> texture;
+				}
 
-                advancement.display.backgroundTexture = texture.GetUTF16();
-            }
+				bool StatisticsPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt count;
+					data >> count;
 
-            data >> advancement.display.x >> advancement.display.y;
-        }
+					if (m_ProtocolVersion >= Version::Minecraft_1_13_2){
+						for (s32 i = 0; i < count.GetInt(); ++i){
+							VarInt categoryId;
+							VarInt statisticId;
+							VarInt value;
 
-        VarInt criteriaSize;
-        data >> criteriaSize;
+							data >> categoryId >> statisticId >> value;
 
-        for (s32 j = 0; j < criteriaSize.GetInt(); ++j) {
-            MCString identifier;
-            data >> identifier;
-        }
+							// Custom statistic
+							if (statisticId.GetInt() == 8){
+								static const std::wstring statMap[] = {
+									L"minecraft.leave_game", L"minecraft.play_one_minute", L"minecraft.time_since_death", L"minecraft.sneak_Time",
+									L"minecraft.walk_one_cm", L"minecraft.crouch_one_cm", L"minecraft.sprint_one_cm", L"minecraft.swim_one_cm",
+									L"minecraft.fall_one_cm", L"minecraft.climb_one_cm", L"minecraft.fly_one_cm", L"minecraft.dive_one_cm",
+									L"minecraft.minecart_one_cm", L"minecraft.boat_one_cm", L"minecraft.pig_one_cm", L"minecraft.horse_one_cm",
+									L"minecraft.aviate_one_cm", L"minecraft.jump", L"minecraft.drop", L"minecraft.damage_dealt", L"minecraft.damage_taken",
+									L"minecraft.deaths", L"minecraft.mob_kills", L"minecraft.animals_bred", L"minecraft.player_kills", L"minecraft.fish_caught",
+									L"minecraft.talked_to_villager", L"minecraft.traded_with_villager", L"minecraft.eat_cake_slice", L"minecraft.fill_cauldron",
+									L"minecraft.use_cauldron", L"minecraft.clean_armor", L"minecraft.clean_banner", L"minecraft.interact_with_brewingstand",
+									L"minecraft.interact_with_beacon", L"minecraft.inspect_dropper", L"minecraft.inspect_hopper", L"minecraft.inspect_dispenser",
+									L"minecraft.play_noteblock", L"minecraft.tune_noteblock", L"minecraft.pot_flower", L"minecraft.trigger_trapped_chest",
+									L"minecraft.open_enderchest", L"minecraft.enchant_item", L"minecraft.play_record", L"minecraft.interact_with_furnace",
+									L"minecraft.interact_with_crafting_table", L"minecraft.open_chest", L"minecraft.sleep_in_bed", L"minecraft.open_shulker_box"
+								};
 
-        VarInt requirementSize;
-        data >> requirementSize;
+								m_Statistics[statMap[statisticId.GetInt()]] = value.GetInt();
+							}
+						}
+					}
+					else{
+						for (s32 i = 0; i < count.GetInt(); ++i){
+							MCString name;
+							VarInt value;
 
-        advancement.requirements.resize(requirementSize.GetInt());
+							data >> name;
+							data >> value;
 
-        for (s32 j = 0; j < requirementSize.GetInt(); ++j) {
-            VarInt size;
-            data >> size;
+							m_Statistics[name.GetUTF16()] = value.GetInt();
+						}
+					}
 
-            auto& requirementArray = advancement.requirements[j];
-            requirementArray.resize(size.GetInt());
+					return true;
+				}
 
-            for (s32 k = 0; k < size.GetInt(); ++k) {
-                MCString requirement;
+				void StatisticsPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-                data >> requirement;
+				AdvancementsPacket::AdvancementsPacket(){
 
-                requirementArray[k] = requirement.GetUTF16();
-            }
-        }
+				}
 
-        m_Advancements.insert(std::make_pair(key.GetUTF16(), advancement));
-    }
+				bool AdvancementsPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_Reset;
 
-    VarInt listSize;
-    data >> listSize;
+					VarInt mappingSize;
 
-    for (s32 i = 0; i < listSize.GetInt(); ++i) {
-        MCString identifier;
-        data >> identifier;
+					data >> mappingSize;
 
-        m_RemoveIdentifiers.push_back(identifier.GetUTF16());
-    }
+					for (s32 i = 0; i < mappingSize.GetInt(); ++i){
+						MCString key;
+						Advancement advancement;
 
-    VarInt progressSize;
-    data >> progressSize;
+						data >> key;
 
-    for (s32 i = 0; i < progressSize.GetInt(); ++i) {
-        // The identifier of the advancement
-        MCString key;
+						bool hasParent;
+						data >> hasParent;
 
-        data >> key;
+						if (hasParent){
+							MCString parent;
+							data >> parent;
+							advancement.parentId = parent.GetUTF16();
+						}
 
-        VarInt size;
-        data >> size;
+						bool hasDisplay;
+						data >> hasDisplay;
+						if (hasDisplay){
+							MCString title, description;
+							data >> title >> description;
 
-        AdvancementProgress progress;
-        for (s32 j = 0; j < size.GetInt(); ++j) {
-            MCString criterionIdentifier;
-            CriterionProgress criterionProgress;
+							advancement.display.title = title.GetUTF16();
+							advancement.display.description = description.GetUTF16();
 
-            data >> criterionIdentifier;
-            
-            data >> criterionProgress.achieved;
-            if (criterionProgress.achieved)
-                data >> criterionProgress.date;
+							advancement.display.icon.Deserialize(data, m_ProtocolVersion);
 
-            progress.insert(std::make_pair(criterionIdentifier.GetUTF16(), criterionProgress));
-        }
+							VarInt frameType;
+							data >> frameType;
 
-        m_Progress.insert(std::make_pair(key.GetUTF16(), progress));
-    }
+							advancement.display.frameType = (FrameType)frameType.GetInt();
+							data >> advancement.display.flags;
 
-    return true;
-}
+							if ((advancement.display.flags & (s32)Flags::BackgroundTexture) != 0){
+								MCString texture;
+								data >> texture;
 
-void AdvancementsPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+								advancement.display.backgroundTexture = texture.GetUTF16();
+							}
 
-BlockBreakAnimationPacket::BlockBreakAnimationPacket() {
-    
-}
+							data >> advancement.display.x >> advancement.display.y;
+						}
 
-bool BlockBreakAnimationPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
-    Position position;
+						VarInt criteriaSize;
+						data >> criteriaSize;
 
-    data >> eid >> position >> m_DestroyStage;
+						for (s32 j = 0; j < criteriaSize.GetInt(); ++j){
+							MCString identifier;
+							data >> identifier;
+						}
 
-    m_EntityId = eid.GetInt();
-    m_Position.x = position.GetX();
-    m_Position.y = position.GetY();
-    m_Position.z = position.GetZ();
+						VarInt requirementSize;
+						data >> requirementSize;
 
-    return true;
-}
+						advancement.requirements.resize(requirementSize.GetInt());
 
-void BlockBreakAnimationPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+						for (s32 j = 0; j < requirementSize.GetInt(); ++j){
+							VarInt size;
+							data >> size;
 
-UpdateBlockEntityPacket::UpdateBlockEntityPacket() {
-    
-}
+							auto& requirementArray = advancement.requirements[j];
+							requirementArray.resize(size.GetInt());
 
-bool UpdateBlockEntityPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    Position pos;
-    u8 action;
+							for (s32 k = 0; k < size.GetInt(); ++k){
+								MCString requirement;
 
-    data >> pos;
-    data >> action;
+								data >> requirement;
 
-    nbt::NBT nbt;
-    data >> nbt;
+								requirementArray[k] = requirement.GetUTF16();
+							}
+						}
 
-    m_BlockEntity = block::BlockEntity::CreateFromNBT(&nbt);
-    m_Position = Vector3i(pos.GetX(), pos.GetY(), pos.GetZ());
-    m_Action = (Action)action;
+						m_Advancements.insert(std::make_pair(key.GetUTF16(), advancement));
+					}
 
-    return true;
-}
+					VarInt listSize;
+					data >> listSize;
 
-void UpdateBlockEntityPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					for (s32 i = 0; i < listSize.GetInt(); ++i){
+						MCString identifier;
+						data >> identifier;
 
-BlockActionPacket::BlockActionPacket() {
-    
-}
+						m_RemoveIdentifiers.push_back(identifier.GetUTF16());
+					}
 
-bool BlockActionPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    Position position;
-    VarInt type;
+					VarInt progressSize;
+					data >> progressSize;
 
-    data >> position >> m_ActionId >> m_ActionParam >> type;
+					for (s32 i = 0; i < progressSize.GetInt(); ++i){
+						// The identifier of the advancement
+						MCString key;
 
-    m_Position.x = position.GetX();
-    m_Position.y = position.GetY();
-    m_Position.z = position.GetZ();
-    m_BlockType = type.GetInt();
+						data >> key;
 
-    return true;
-}
+						VarInt size;
+						data >> size;
 
-void BlockActionPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+						AdvancementProgress progress;
+						for (s32 j = 0; j < size.GetInt(); ++j){
+							MCString criterionIdentifier;
+							CriterionProgress criterionProgress;
 
-BlockChangePacket::BlockChangePacket() {
-    
-}
+							data >> criterionIdentifier;
 
-bool BlockChangePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    Position location;
-    VarInt blockId;
+							data >> criterionProgress.achieved;
+							if (criterionProgress.achieved)
+								data >> criterionProgress.date;
 
-    data >> location >> blockId;
+							progress.insert(std::make_pair(criterionIdentifier.GetUTF16(), criterionProgress));
+						}
 
-    m_Position = Vector3i(location.GetX(), location.GetY(), location.GetZ());
-    m_BlockId = blockId.GetInt();
+						m_Progress.insert(std::make_pair(key.GetUTF16(), progress));
+					}
 
-    return true;
-}
-void BlockChangePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					return true;
+				}
 
-BossBarPacket::BossBarPacket() {
-    
-}
+				void AdvancementsPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-bool BossBarPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    static int DivisionCounts[] = { 0, 6, 10, 12, 20 };
-    VarInt action;
-
-    data >> m_UUID >> action;
-    m_Action = (Action)action.GetInt();
-
-    switch (m_Action) {
-        case Action::Add:
-        {
-            MCString title;
-            VarInt color, divisions;
-
-            data >> title >> m_Health >> color >> divisions >> m_Flags;
-
-            m_Title = title.GetUTF16();
-            m_Color = (Color)color.GetInt();
-            m_Divisions = DivisionCounts[divisions.GetInt()];
-        }
-        break;
-        case Action::Remove:
-        {
-        }
-        break;
-        case Action::UpdateHealth:
-        {
-            data >> m_Health;
-        }
-        break;
-        case Action::UpdateTitle:
-        {
-            MCString title;
-
-            data >> title;
-            m_Title = title.GetUTF16();
-        }
-        break;
-        case Action::UpdateStyle:
-        {
-            VarInt color, divisions;
-
-            data >> color >> divisions;
-
-            m_Color = (Color)color.GetInt();
-            m_Divisions = DivisionCounts[divisions.GetInt()];
-        }
-        break;
-        case Action::UpdateFlags:
-        {
-            data >> m_Flags;
-        }
-        break;
-    }
-
-    return true;
-}
-void BossBarPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				BlockBreakAnimationPacket::BlockBreakAnimationPacket(){
 
-ServerDifficultyPacket::ServerDifficultyPacket() {
-    
-}
+				}
 
-bool ServerDifficultyPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_Difficulty;
-    return true;
-}
+				bool BlockBreakAnimationPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
+					Position position;
 
-void ServerDifficultyPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					//data.SetReadOffset(0);
 
-TabCompletePacket::TabCompletePacket() {
-    
-}
+					data >> eid;
+					data >> position;
+					data >> m_DestroyStage;
 
-bool TabCompletePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    if (m_ProtocolVersion > protocol::Version::Minecraft_1_12_2) {
-        VarInt id, start, length, count;
+					m_EntityId = eid.GetInt();
+					m_Position.x = position.GetX();
+					m_Position.y = position.GetY();
+					m_Position.z = position.GetZ();
 
-        data >> id >> start >> length >> count;
+					return true;
+				}
 
-        for (s32 i = 0; i < count.GetInt(); ++i) {
-            MCString match, tooltip;
-            bool hasTooltip;
+				void BlockBreakAnimationPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-            data >> match >> hasTooltip;
+				UpdateBlockEntityPacket::UpdateBlockEntityPacket(){
 
-            if (hasTooltip) {
-                data >> tooltip;
-            }
+				}
 
-            m_Matches.push_back(match.GetUTF16());
-        }
+				bool UpdateBlockEntityPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					Position pos;
+					u8 action;
 
-    } else {
-        VarInt count;
+					data >> pos;
+					data >> action;
 
-        data >> count;
+					nbt::NBT nbt;
+					data >> nbt;
 
-        for (s32 i = 0; i < count.GetInt(); ++i) {
-            MCString match;
+					m_BlockEntity = block::BlockEntity::CreateFromNBT(&nbt);
+					m_Position = Vector3i(pos.GetX(), pos.GetY(), pos.GetZ());
+					m_Action = (Action)action;
 
-            data >> match;
+					return true;
+				}
 
-            m_Matches.push_back(match.GetUTF16());
-        }
-    }
+				void UpdateBlockEntityPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    return true;
-}
+				BlockActionPacket::BlockActionPacket(){
 
-void TabCompletePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				}
 
-ChatPacket::ChatPacket() {
-    
-}
+				bool BlockActionPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					Position position;
+					VarInt type;
 
-bool ChatPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    MCString chatData;
-    u8 position;
+					data >> position >> m_ActionId >> m_ActionParam >> type;
 
-    data >> chatData;
-    data >> position;
+					m_Position.x = position.GetX();
+					m_Position.y = position.GetY();
+					m_Position.z = position.GetZ();
+					m_BlockType = type.GetInt();
 
-    m_Position = (ChatPosition)position;
+					return true;
+				}
 
-    try {
-        m_ChatData = json::parse(chatData.GetUTF8());
-    } catch (json::parse_error&) {
+				void BlockActionPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    }
-    
-    return true;
-}
+				BlockChangePacket::BlockChangePacket(){
 
-void ChatPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				}
 
-MultiBlockChangePacket::MultiBlockChangePacket() {
-    
-}
+				bool BlockChangePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					Position location;
+					VarInt blockId;
 
-bool MultiBlockChangePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_ChunkX >> m_ChunkZ;
-    VarInt count;
-    data >> count;
-
-    for (s32 i = 0; i < count.GetInt(); ++i) {
-        u8 horizontal;
-        u8 y;
-        VarInt blockID;
-
-        data >> horizontal >> y >> blockID;
-
-        BlockChange change;
-        change.x = horizontal >> 4;
-        change.z = horizontal & 15;
-        change.y = y;
-        change.blockData = blockID.GetShort();
-
-        m_BlockChanges.push_back(change);
-    }
-    return true;
-}
+					data >> location >> blockId;
 
-void MultiBlockChangePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					m_Position = Vector3i(location.GetX(), location.GetY(), location.GetZ());
+					m_BlockId = blockId.GetInt();
 
-ConfirmTransactionPacket::ConfirmTransactionPacket() {
-    
-}
+					return true;
+				}
+				void BlockChangePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-bool ConfirmTransactionPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_WindowId >> m_Action >> m_Accepted;
-    return true;
-}
+				BossBarPacket::BossBarPacket(){
 
-void ConfirmTransactionPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				}
 
-CloseWindowPacket::CloseWindowPacket() {
-    
-}
+				bool BossBarPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					static int DivisionCounts[] = {0, 6, 10, 12, 20};
+					VarInt action;
 
-bool CloseWindowPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_WindowId;
-    return true;
-}
+					data >> m_UUID >> action;
+					m_Action = (Action)action.GetInt();
 
-void CloseWindowPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					switch (m_Action){
+					case Action::Add:
+					{
+						MCString title;
+						VarInt color, divisions;
 
-OpenWindowPacket::OpenWindowPacket() {
-    
-}
+						data >> title >> m_Health >> color >> divisions >> m_Flags;
 
-bool OpenWindowPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    MCString type, title;
+						m_Title = title.GetUTF16();
+						m_Color = (Color)color.GetInt();
+						m_Divisions = DivisionCounts[divisions.GetInt()];
+					}
+					break;
+					case Action::Remove:
+					{
+					}
+					break;
+					case Action::UpdateHealth:
+					{
+						data >> m_Health;
+					}
+					break;
+					case Action::UpdateTitle:
+					{
+						MCString title;
 
-    data >> m_WindowId >> type >> title >> m_SlotCount;
-    
-    m_WindowType = type.GetUTF16();
-    m_WindowTitle = title.GetUTF16();
+						data >> title;
+						m_Title = title.GetUTF16();
+					}
+					break;
+					case Action::UpdateStyle:
+					{
+						VarInt color, divisions;
 
-    m_EntityId = 0;
-    if (m_WindowType.compare(L"EntityHorse") == 0)
-        data >> m_EntityId;
+						data >> color >> divisions;
 
-    return true;
-}
+						m_Color = (Color)color.GetInt();
+						m_Divisions = DivisionCounts[divisions.GetInt()];
+					}
+					break;
+					case Action::UpdateFlags:
+					{
+						data >> m_Flags;
+					}
+					break;
+					}
 
-void OpenWindowPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					return true;
+				}
+				void BossBarPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-WindowItemsPacket::WindowItemsPacket() {
-    
-}
+				ServerDifficultyPacket::ServerDifficultyPacket(){
 
-bool WindowItemsPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_WindowId;
-    s16 count;
-    data >> count;
+				}
 
-    for (s16 i = 0; i < count; ++i) {
-        inventory::Slot slot;
+				bool ServerDifficultyPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_Difficulty;
+					return true;
+				}
 
-        slot.Deserialize(data, m_ProtocolVersion);
+				void ServerDifficultyPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-        m_Slots.push_back(slot);
-    }
+				TabCompletePacket::TabCompletePacket(){
 
-    return true;
-}
+				}
 
-void WindowItemsPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				bool TabCompletePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					if (m_ProtocolVersion > protocol::Version::Minecraft_1_12_2){
+						VarInt id, start, length, count;
 
-WindowPropertyPacket::WindowPropertyPacket() {
-    
-}
+						data >> id >> start >> length >> count;
 
-bool WindowPropertyPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_WindowId >> m_Property >> m_Value;
-    return true;
-}
+						for (s32 i = 0; i < count.GetInt(); ++i){
+							MCString match, tooltip;
+							bool hasTooltip;
 
-void WindowPropertyPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+							data >> match >> hasTooltip;
 
-SetSlotPacket::SetSlotPacket() {
-    
-}
+							if (hasTooltip){
+								data >> tooltip;
+							}
 
-bool SetSlotPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_WindowId;
-    data >> m_SlotIndex;
-    m_Slot.Deserialize(data, m_ProtocolVersion);
-    return true;
-}
+							m_Matches.push_back(match.GetUTF16());
+						}
 
-void SetSlotPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					}
+					else{
+						VarInt count;
 
-SetCooldownPacket::SetCooldownPacket() {
-    
-}
+						data >> count;
 
-bool SetCooldownPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt item, ticks;
-    data >> item >> ticks;
+						for (s32 i = 0; i < count.GetInt(); ++i){
+							MCString match;
 
-    m_ItemId = item.GetInt();
-    m_Ticks = ticks.GetInt();
+							data >> match;
 
-    return true;
-}
+							m_Matches.push_back(match.GetUTF16());
+						}
+					}
 
-void SetCooldownPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					return true;
+				}
 
-PluginMessagePacket::PluginMessagePacket() {
-    
-}
+				void TabCompletePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-bool PluginMessagePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    std::size_t begin = data.GetReadOffset();
+				ChatPacket::ChatPacket(){
 
-    data >> m_Channel;
+				}
 
-    data.ReadSome(m_Data, data.GetSize() - (data.GetReadOffset() - begin) - 1);
+				bool ChatPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					MCString chatData;
+					u8 position;
 
-    return true;
-}
+					data >> chatData;
+					data >> position;
 
-void PluginMessagePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					if (GetProtocolVersion() >= Version::Minecraft_1_16_5){
+						mc::UUID sender;
+						data >> sender;
+						m_Sender = sender;
+					}
 
-NamedSoundEffectPacket::NamedSoundEffectPacket() {
-    
-}
+					m_Position = (ChatPosition)position;
 
-bool NamedSoundEffectPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    MCString name;
-    VarInt category;
+					try{
+						m_ChatData = json::parse(chatData.GetUTF8());
+					}
+					catch (json::parse_error&){
 
-    data >> name >> category;
+					}
 
-    m_Name = name.GetUTF16();
-    m_Category = (SoundCategory)category.GetInt();
+					return true;
+				}
 
-    FixedPointNumber<u32> x, y, z;
-    
-    data >> x >> y >> z;
-    m_Position.x = (double)x.GetFloat();
-    m_Position.y = (double)y.GetFloat();
-    m_Position.z = (double)z.GetFloat();
+				void ChatPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    data >> m_Volume >> m_Pitch;
+				MultiBlockChangePacket::MultiBlockChangePacket(){
 
-    return true;
-}
+				}
 
-void NamedSoundEffectPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				bool MultiBlockChangePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					//used in 1.16 protocol
+					s32 ChunkY;
 
-EntityStatusPacket::EntityStatusPacket() {
-    
-}
+					if (GetProtocolVersion() >= Version::Minecraft_1_16_5){
+						u64 ChunkSection;
+						data >> ChunkSection;
+						m_ChunkX = ChunkSection >> 42;
+						m_ChunkZ = ChunkSection << 22 >> 42;
+						ChunkY = ChunkSection << 44 >> 44;
+					}
+					else{
+						data >> m_ChunkX >> m_ChunkZ;
+					}
 
-bool EntityStatusPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_EntityId;
-    data >> m_Status;
-    return true;
-}
+					VarInt count;
+					data >> count;
 
-void EntityStatusPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					if (GetProtocolVersion() >= Version::Minecraft_1_16_5){
+						for(s32 i = 0; i < count.GetInt(); i++){
+							VarLong block;
+							data >> block;
+							u64 blockData = block.GetLong();
+							u8 blockX = (blockData >> 8) & 0xF;
+							u8 blockZ = (blockData >> 4) & 0xF;
+							u8 blockY = blockData & 0xF;
+							u64 blockID = blockData >> 12;
 
-ExplosionPacket::ExplosionPacket() {
-    
-}
+							BlockChange change;
+							change.x = blockX;
+							change.z = blockZ;
+							change.y = ChunkY * 16 + blockY;
 
-bool ExplosionPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    float posX, posY, posZ;
-    s32 count;
+							m_BlockChanges.push_back(change);
+						}
+					}
+					else{
+						for (s32 i = 0; i < count.GetInt(); ++i){
+							u8 horizontal;
+							u8 y;
+							VarInt blockID;
 
-    data >> posX >> posY >> posZ;
+							data >> horizontal >> y >> blockID;
 
-    m_Position = Vector3d(posX, posY, posZ);
+							BlockChange change;
+							change.x = horizontal >> 4;
+							change.z = horizontal & 15;
+							change.y = y;
+							change.blockData = blockID.GetShort();
 
-    data >> m_Radius;
-    data >> count;
+							m_BlockChanges.push_back(change);
+						}
+					}
+					return true;
+				}
 
-    for (s32 i = 0; i < count; ++i) {
-        s8 x, y, z;
-        data >> x >> y >> z;
-        m_AffectedBlocks.push_back(Vector3s(x, y, z));
-    }
+				void MultiBlockChangePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    float motionX, motionY, motionZ;
+				ConfirmTransactionPacket::ConfirmTransactionPacket(){
 
-    data >> motionX >> motionY >> motionZ;
+				}
 
-    m_PlayerMotion = Vector3d(motionX, motionY, motionZ);
+				bool ConfirmTransactionPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_WindowId >> m_Action >> m_Accepted;
+					return true;
+				}
 
-    return true;
-}
+				void ConfirmTransactionPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-void ExplosionPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				CloseWindowPacket::CloseWindowPacket(){
 
-UnloadChunkPacket::UnloadChunkPacket() {
-    
-}
+				}
 
-bool UnloadChunkPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_ChunkX >> m_ChunkZ;
-    return true;
-}
+				bool CloseWindowPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_WindowId;
+					return true;
+				}
 
-void UnloadChunkPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				void CloseWindowPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-ChangeGameStatePacket::ChangeGameStatePacket() {
-    
-}
+				OpenWindowPacket::OpenWindowPacket(){
 
-bool ChangeGameStatePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    u8 reason;
-    data >> reason;
+				}
 
-    m_Reason = (Reason)reason;
+				bool OpenWindowPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					MCString type, title;
 
-    data >> m_Value;
+					data >> m_WindowId >> type >> title >> m_SlotCount;
 
-    return true;
-}
+					m_WindowType = type.GetUTF16();
+					m_WindowTitle = title.GetUTF16();
 
-void ChangeGameStatePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					m_EntityId = 0;
+					if (m_WindowType.compare(L"EntityHorse") == 0)
+						data >> m_EntityId;
 
-KeepAlivePacket::KeepAlivePacket() {
-    
-}
+					return true;
+				}
 
-bool KeepAlivePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    if (this->GetProtocolVersion() < Version::Minecraft_1_12_2) {
-        VarInt aliveId;
+				void OpenWindowPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-        data >> aliveId;
+				WindowItemsPacket::WindowItemsPacket(){
 
-        m_AliveId = aliveId.GetLong();
-    } else {
-        data >> m_AliveId;
-    }
+				}
 
-    return true;
-}
+				bool WindowItemsPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_WindowId;
+					s16 count;
+					data >> count;
 
-void KeepAlivePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					for (s16 i = 0; i < count; ++i){
+						inventory::Slot slot;
 
-ChunkDataPacket::ChunkDataPacket() {
-    
-}
+						slot.Deserialize(data, m_ProtocolVersion);
 
-bool ChunkDataPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    world::ChunkColumnMetadata metadata;
+						m_Slots.push_back(slot);
+					}
 
-    data >> metadata.x;
-    data >> metadata.z;
-    data >> metadata.continuous;
-    VarInt mask;
-    data >> mask;
+					return true;
+				}
 
-    nbt::NBT heightmaps;
+				void WindowItemsPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    data >> heightmaps;
+				WindowPropertyPacket::WindowPropertyPacket(){
 
-    if (GetProtocolVersion() > Version::Minecraft_1_13_2 && metadata.continuous) {
-      // Skip biome data
-      data.SetReadOffset(data.GetReadOffset() + 1024 * sizeof(u32));
-    }
+				}
 
-    metadata.sectionmask = mask.GetInt();
+				bool WindowPropertyPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_WindowId >> m_Property >> m_Value;
+					return true;
+				}
 
-    if (m_Connection)
-        metadata.skylight = m_Connection->GetDimension() == 0;
-    else
-        metadata.skylight = true;
+				void WindowPropertyPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    VarInt size;
+				SetSlotPacket::SetSlotPacket(){
 
-    data >> size;
+				}
 
-    m_ChunkColumn = std::make_shared<world::ChunkColumn>(metadata, GetProtocolVersion());
+				bool SetSlotPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_WindowId;
+					data >> m_SlotIndex;
+					m_Slot.Deserialize(data, m_ProtocolVersion);
+					return true;
+				}
 
-    data >> *m_ChunkColumn;
+				void SetSlotPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    // Skip biome information
-    if (GetProtocolVersion() <= Version::Minecraft_1_13_2 && metadata.continuous) {
-      data.SetReadOffset(data.GetReadOffset() + 256);
-    }
+				SetCooldownPacket::SetCooldownPacket(){
 
-    VarInt entities;
-    data >> entities;
+				}
 
-    s32 entityCount = entities.GetInt();
+				bool SetCooldownPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt item, ticks;
+					data >> item >> ticks;
 
-    for (s32 i = 0; i < entities.GetInt(); ++i) {
-        nbt::NBT nbt;
+					m_ItemId = item.GetInt();
+					m_Ticks = ticks.GetInt();
 
-        data >> nbt;
+					return true;
+				}
 
-        block::BlockEntityPtr blockEntity = block::BlockEntity::CreateFromNBT(&nbt);
+				void SetCooldownPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-        if (blockEntity == nullptr) continue;
+				PluginMessagePacket::PluginMessagePacket(){
 
-        m_BlockEntities.push_back(blockEntity);
-        m_ChunkColumn->AddBlockEntity(blockEntity);
-    }
+				}
 
-    return true;
-}
+				bool PluginMessagePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					std::size_t begin = data.GetReadOffset();
 
-void ChunkDataPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					data >> m_Channel;
 
-EffectPacket::EffectPacket() {
-    
-}
+					data.ReadSome(m_Data, data.GetSize() - (data.GetReadOffset() - begin) - 1);
 
-bool EffectPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_EffectId;
-    Position pos;
-    data >> pos;
+					return true;
+				}
 
-    m_Position.x = pos.GetX();
-    m_Position.y = pos.GetY();
-    m_Position.z = pos.GetZ();
+				void PluginMessagePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    data >> m_Data;
-    data >> m_DisableRelativeVolume;
+				NamedSoundEffectPacket::NamedSoundEffectPacket(){
 
-    return true;
-}
+				}
 
-void EffectPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				bool NamedSoundEffectPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					MCString name;
+					VarInt category;
 
-ParticlePacket::ParticlePacket() {
-    
-}
+					data >> name >> category;
 
-bool ParticlePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_ParticleId >> m_LongDistance;
-
-    float x, y, z;
-    data >> x >> y >> z;
-    m_Position = Vector3d(x, y, z);
-
-    float offsetX, offsetY, offsetZ;
-    data >> offsetX >> offsetY >> offsetZ;
-    m_MaxOffset = Vector3d(offsetX, offsetY, offsetZ);
-
-    data >> m_ParticleData >> m_Count;
-
-    if (m_ParticleId == 36) { // iconcrack
-        for (s32 i = 0; i < 2; ++i) {
-            VarInt varData;
-            data >> varData;
-            m_Data.push_back(varData.GetInt());
-        }
-    } else if (m_ParticleId == 37 || m_ParticleId == 38) { // blockcrack || blockdust
-        VarInt varData;
-        data >> varData;
-        m_Data.push_back(varData.GetInt());
-    }
-
-    return true;
-}
+					m_Name = name.GetUTF16();
+					m_Category = (SoundCategory)category.GetInt();
 
-void ParticlePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					FixedPointNumber<u32> x, y, z;
 
-JoinGamePacket::JoinGamePacket() {
-    
-}
+					data >> x >> y >> z;
+					m_Position.x = (double)x.GetFloat();
+					m_Position.y = (double)y.GetFloat();
+					m_Position.z = (double)z.GetFloat();
 
-bool JoinGamePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_EntityId;
-    data >> m_Gamemode;
-    data >> m_Dimension;
-
-    if (this->GetProtocolVersion() >= Version::Minecraft_1_15_2) {
-      u64 hashedSeed;
-      data >> hashedSeed;
-    } else {
-      data >> m_Difficulty;
-    }
-    data >> m_MaxPlayers;
-    data >> m_LevelType;
-
-    if (this->GetProtocolVersion() >= Version::Minecraft_1_15_2) {
-      VarInt viewDistance;
-
-      data >> viewDistance;
-    }
-
-    data >> m_ReducedDebug;
-
-    if (this->GetProtocolVersion() >= Version::Minecraft_1_15_2) {
-      bool respawnScreen;
-      data >> respawnScreen;
-    }
-    return true;
-}
+					data >> m_Volume >> m_Pitch;
 
-void JoinGamePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					return true;
+				}
 
-MapPacket::MapPacket() {
-    
-}
+				void NamedSoundEffectPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-bool MapPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt mapId, count;
+				EntityStatusPacket::EntityStatusPacket(){
 
-    data >> mapId >> m_Scale >> m_TrackPosition >> count;
-    m_MapId = mapId.GetInt();
+				}
 
-    for (s32 i = 0; i < count.GetInt(); ++i) {
-        Icon icon;
-        data >> icon.direction >> icon.x >> icon.z;
+				bool EntityStatusPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_EntityId;
+					data >> m_Status;
+					return true;
+				}
 
-        icon.type = icon.direction & 0x0F;
-        icon.direction = (icon.direction & 0xF0) >> 4;
+				void EntityStatusPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-        m_Icons.push_back(icon);
-    }
+				ExplosionPacket::ExplosionPacket(){
 
-    data >> m_Columns;
+				}
 
-    if (m_Columns > 0) {
-        VarInt length;
+				bool ExplosionPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					float posX, posY, posZ;
+					s32 count;
 
-        data >> m_Rows >> m_X >> m_Z >> length;
-        data.ReadSome(m_Data, length.GetInt());
-    }
+					data >> posX >> posY >> posZ;
 
-    return true;
-}
+					m_Position = Vector3d(posX, posY, posZ);
 
-void MapPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					data >> m_Radius;
+					data >> count;
 
+					for (s32 i = 0; i < count; ++i){
+						s8 x, y, z;
+						data >> x >> y >> z;
+						m_AffectedBlocks.push_back(Vector3s(x, y, z));
+					}
 
-EntityRelativeMovePacket::EntityRelativeMovePacket() {
-    
-}
+					float motionX, motionY, motionZ;
 
-bool EntityRelativeMovePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
+					data >> motionX >> motionY >> motionZ;
 
-    data >> eid;
-    data >> m_Delta.x >> m_Delta.y >> m_Delta.z;
-    data >> m_OnGround;
+					m_PlayerMotion = Vector3d(motionX, motionY, motionZ);
 
-    m_EntityId = eid.GetInt();
+					return true;
+				}
 
-    return true;
-}
+				void ExplosionPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-void EntityRelativeMovePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				UnloadChunkPacket::UnloadChunkPacket(){
 
-EntityLookAndRelativeMovePacket::EntityLookAndRelativeMovePacket() {
-    
-}
+				}
 
-bool EntityLookAndRelativeMovePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
+				bool UnloadChunkPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_ChunkX >> m_ChunkZ;
+					return true;
+				}
 
-    data >> eid >> m_Delta.x >> m_Delta.y >> m_Delta.z;
-    data >> m_Yaw >> m_Pitch;
-    data >> m_OnGround;
+				void UnloadChunkPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    m_EntityId = eid.GetInt();
+				ChangeGameStatePacket::ChangeGameStatePacket(){
 
-    return true;
-}
+				}
 
-void EntityLookAndRelativeMovePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				bool ChangeGameStatePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					u8 reason;
+					data >> reason;
 
-EntityLookPacket::EntityLookPacket() {
-    
-}
+					m_Reason = (Reason)reason;
 
-bool EntityLookPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
+					data >> m_Value;
 
-    data >> eid;
+					return true;
+				}
 
-    m_EntityId = eid.GetInt();
+				void ChangeGameStatePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    data >> m_Yaw >> m_Pitch;
-    data >> m_OnGround;
-    return true;
-}
+				KeepAlivePacket::KeepAlivePacket(){
 
-void EntityLookPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				}
 
-EntityPacket::EntityPacket() {
-    
-}
+				bool KeepAlivePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					if (this->GetProtocolVersion() < Version::Minecraft_1_12_2){
+						VarInt aliveId;
 
-bool EntityPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
-    data >> eid;
-    m_EntityId = eid.GetInt();
-    return true;
-}
+						data >> aliveId;
 
-void EntityPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+						m_AliveId = aliveId.GetLong();
+					}
+					else{
+						data >> m_AliveId;
+					}
 
-VehicleMovePacket::VehicleMovePacket() {
-    
-}
+					return true;
+				}
 
-bool VehicleMovePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_Position.x >> m_Position.y >> m_Position.z >> m_Yaw >> m_Pitch;
-    return true;
-}
+				void KeepAlivePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-void VehicleMovePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				ChunkDataPacket::ChunkDataPacket(){
 
-OpenSignEditorPacket::OpenSignEditorPacket() {
-    
-}
+				}
 
-bool OpenSignEditorPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    Position position;
+				bool ChunkDataPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					world::ChunkColumnMetadata metadata;
 
-    data >> position;
+					data >> metadata.x;
+					data >> metadata.z;
+					data >> metadata.continuous;
+					VarInt mask;
+					data >> mask;
 
-    m_Position.x = position.GetX();
-    m_Position.y = position.GetY();
-    m_Position.z = position.GetZ();
-    return true;
-}
+					metadata.sectionmask = mask.GetInt();
 
-void OpenSignEditorPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					nbt::NBT heightmaps;
 
-PlayerAbilitiesPacket::PlayerAbilitiesPacket() {
-    
-}
+					data >> heightmaps;
 
-bool PlayerAbilitiesPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_Flags;
-    data >> m_FlyingSpeed;
-    data >> m_FOVModifier;
+					if (GetProtocolVersion() > Version::Minecraft_1_15_2){
 
-    return true;
-}
+						if (metadata.continuous){
+							VarInt biomesLenght;
+							data >> biomesLenght;
 
-void PlayerAbilitiesPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+							VarInt biomeID;
 
-CombatEventPacket::CombatEventPacket() {
-    
-}
+							for (s32 biome = 0; biome < biomesLenght.GetInt(); biome++){
+								data >> biomeID;
+							}
+						}
 
-bool CombatEventPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt event;
+					}
+					else if (GetProtocolVersion() > Version::Minecraft_1_13_2 && metadata.continuous){
+						// Skip biome data
+						data.SetReadOffset(data.GetReadOffset() + 1024 * sizeof(u32));
+					}
 
-    data >> event;
+					if (m_Connection)
+						metadata.skylight = m_Connection->GetDimension() == 0;
+					else
+						metadata.skylight = true;
 
-    m_Event = (Event)event.GetInt();
+					VarInt size;
 
-    if (m_Event == Event::EndCombat) {
-        VarInt duration;
+					data >> size;
 
-        data >> duration;
+					m_ChunkColumn = std::make_shared<world::ChunkColumn>(metadata, GetProtocolVersion());
 
-        m_Duration = duration.GetInt();
-        data >> m_EntityId;
-    } else if (m_Event == Event::EntityDead) {
-        VarInt pid;
-        data >> pid;
+					data >> *m_ChunkColumn;
 
-        m_PlayerId = pid.GetInt();
-        data >> m_EntityId;
+					// Skip biome information
+					if (GetProtocolVersion() <= Version::Minecraft_1_13_2 && metadata.continuous){
+						data.SetReadOffset(data.GetReadOffset() + 256);
+					}
 
-        MCString message;
-        data >> message;
+					VarInt entities;
+					data >> entities;
 
-        m_Message = message.GetUTF16();
-    }
+					s32 entityCount = entities.GetInt();
 
-    return true;
-}
+					for (s32 i = 0; i < entities.GetInt(); ++i){
+						nbt::NBT nbt;
 
-void CombatEventPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+						data >> nbt;
 
-PlayerListItemPacket::PlayerListItemPacket() {
-    
-}
+						block::BlockEntityPtr blockEntity = block::BlockEntity::CreateFromNBT(&nbt);
 
-bool PlayerListItemPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt action;
-    VarInt numPlayers;
-
-    data >> action;
-    data >> numPlayers;
-
-    m_Action = (Action)action.GetInt();
-
-    for (s32 i = 0; i < numPlayers.GetInt(); ++i) {
-        UUID uuid;
-        data >> uuid;
-
-        ActionDataPtr actionData = std::make_shared<ActionData>();
-        actionData->uuid = uuid;
-
-        
-
-        switch (m_Action) {
-        case Action::AddPlayer:
-        {
-            MCString name;
-            VarInt numProperties;
-
-            data >> name;
-            data >> numProperties;
-
-            actionData->name = name.GetUTF16();
-
-            for (s32 j = 0; j < numProperties.GetInt(); ++j) {
-                MCString propertyName;
-                MCString propertyValue;
-                u8 isSigned;
-                MCString signature;
-
-                data >> propertyName;
-                data >> propertyValue;
-                data >> isSigned;
-                if (isSigned)
-                    data >> signature;
-
-                actionData->properties[propertyName.GetUTF16()] = propertyValue.GetUTF16();
-            }
-
-            VarInt gameMode, ping;
-            data >> gameMode;
-            data >> ping;
-
-            u8 hasDisplayName;
-            MCString displayName;
-
-            data >> hasDisplayName;
-            if (hasDisplayName)
-                data >> displayName;
-
-            actionData->gamemode = gameMode.GetInt();
-            actionData->ping = ping.GetInt();
-            actionData->displayName = displayName.GetUTF16();
-        }
-        break;
-        case Action::UpdateGamemode:
-        {
-            VarInt gameMode;
-            data >> gameMode;
-
-            actionData->gamemode = gameMode.GetInt();
-        }
-        break;
-        case Action::UpdateLatency:
-        {
-            VarInt ping;
-            data >> ping;
-
-            actionData->ping = ping.GetInt();
-        }
-        break;
-        case Action::UpdateDisplay:
-        {
-            u8 hasDisplayName;
-            MCString displayName;
-
-            data >> hasDisplayName;
-            if (hasDisplayName)
-                data >> displayName;
-
-            actionData->displayName = displayName.GetUTF16();
-        }
-        break;
-        case Action::RemovePlayer:
-        {
-            std::shared_ptr<ActionData> actionData = std::make_shared<ActionData>();
-            actionData->uuid = uuid;
-        }
-        break;
-        }
-
-        m_Data.push_back(actionData);
-    }
-
-    return true;
-}
+						if (blockEntity == nullptr) continue;
 
-void PlayerListItemPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+						m_BlockEntities.push_back(blockEntity);
+						m_ChunkColumn->AddBlockEntity(blockEntity);
+					}
 
-PlayerPositionAndLookPacket::PlayerPositionAndLookPacket() {
-    
-}
+					return true;
+				}
 
-bool PlayerPositionAndLookPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_Position.x >> m_Position.y >> m_Position.z;
-    data >> m_Yaw >> m_Pitch;
-    data >> m_Flags;
-    VarInt tid;
-    data >> tid;
-
-    m_TeleportId = tid.GetInt();
-    return true;
-}
+				void ChunkDataPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-void PlayerPositionAndLookPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				EffectPacket::EffectPacket(){
 
-UseBedPacket::UseBedPacket() {
-    
-}
+				}
 
-bool UseBedPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
-    Position location;
+				bool EffectPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_EffectId;
+					Position pos;
+					data >> pos;
 
-    data >> eid >> location;
+					m_Position.x = pos.GetX();
+					m_Position.y = pos.GetY();
+					m_Position.z = pos.GetZ();
 
-    m_EntityId = eid.GetInt();
-    m_Position.x = location.GetX();
-    m_Position.y = location.GetY();
-    m_Position.z = location.GetZ();
-    return true;
-}
+					data >> m_Data;
+					data >> m_DisableRelativeVolume;
 
-void UseBedPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					return true;
+				}
 
-DestroyEntitiesPacket::DestroyEntitiesPacket() {
-    
-}
+				void EffectPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-bool DestroyEntitiesPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt count;
+				ParticlePacket::ParticlePacket(){
 
-    data >> count;
+				}
 
-    for (s32 i = 0; i < count.GetInt(); ++i) {
-        VarInt eid;
+				bool ParticlePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_ParticleId >> m_LongDistance;
 
-        data >> eid;
+					float x, y, z;
+					data >> x >> y >> z;
+					m_Position = Vector3d(x, y, z);
 
-        m_EntityIds.push_back(eid.GetInt());
-    }
-    return true;
-}
+					float offsetX, offsetY, offsetZ;
+					data >> offsetX >> offsetY >> offsetZ;
+					m_MaxOffset = Vector3d(offsetX, offsetY, offsetZ);
 
-void DestroyEntitiesPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					data >> m_ParticleData >> m_Count;
 
-UnlockRecipesPacket::UnlockRecipesPacket() {
+					if (m_ParticleId == 36){ // iconcrack
+						for (s32 i = 0; i < 2; ++i){
+							VarInt varData;
+							data >> varData;
+							m_Data.push_back(varData.GetInt());
+						}
+					}
+					else if (m_ParticleId == 37 || m_ParticleId == 38){ // blockcrack || blockdust
+						VarInt varData;
+						data >> varData;
+						m_Data.push_back(varData.GetInt());
+					}
 
-}
+					return true;
+				}
 
-bool UnlockRecipesPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    s16 action;
+				void ParticlePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    data >> action;
-    m_Action = (Action)action;
+				JoinGamePacket::JoinGamePacket(){
 
-    data >> m_OpenCraftingBook;
-    data >> m_Filter;
+				}
 
-    VarInt size1;
-    data >> size1;
+				bool JoinGamePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					if (GetProtocolVersion() >= Version::Minecraft_1_16_5){
+						data >> m_EntityId;
+						bool Hardcore;
+						data >> Hardcore;
+						data >> m_Gamemode;
+						bool PreviousGamemode;
+						data >> PreviousGamemode;
 
-    m_Array1.resize(size1.GetInt());
+						VarInt worldCount;
+						data >> worldCount;
 
-    for (s32 i = 0; i < size1.GetInt(); ++i) {
-        VarInt id;
+						for (int i = 0; i < worldCount.GetInt(); i++){
+							MCString worldIdentifier;
+							data >> worldIdentifier;
+						}
 
-        data >> id;
+						nbt::NBT dimensionCodec;
+						data >> dimensionCodec;
 
-        m_Array1[i] = id.GetInt();
-    }
+						nbt::NBT dimension;
+						data >> dimension;
 
-    if (m_Action == Action::Initialize) {
-        VarInt size2;
-        data >> size2;
+						MCString worldName;
+						data >> worldName;
 
-        m_Array2.resize(size2.GetInt());
+						s64 hashedSeed;
+						data >> hashedSeed;
 
-        for (s32 i = 0; i < size2.GetInt(); ++i) {
-            VarInt id;
+						VarInt maxPlayers;
+						data >> maxPlayers;
 
-            data >> id;
+						m_MaxPlayers = maxPlayers.GetByte();
 
-            m_Array2[i] = id.GetInt();
-        }
-    }
+						VarInt viewDistance;
+						data >> viewDistance;
 
-    return true;
-}
+						data >> m_ReducedDebug;
 
-void UnlockRecipesPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+						bool enableRespawnScreen;
+						data >> enableRespawnScreen;
 
-RemoveEntityEffectPacket::RemoveEntityEffectPacket() {
-    
-}
+						bool isDebug;
+						data >> isDebug;
 
-bool RemoveEntityEffectPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
-    data >> eid >> m_EffectId;
-    m_EntityId = eid.GetInt();
-    return true;
-}
+						bool isFlat;
+						data >> isFlat;
 
-void RemoveEntityEffectPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					}
+					else{
 
-ResourcePackSendPacket::ResourcePackSendPacket() {
-    
-}
+						data >> m_EntityId;
+						data >> m_Gamemode;
+						data >> m_Dimension;
 
-bool ResourcePackSendPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    MCString url, hash;
+						if (this->GetProtocolVersion() >= Version::Minecraft_1_15_2){
+							u64 hashedSeed;
+							data >> hashedSeed;
+						}
+						else{
+							data >> m_Difficulty;
+						}
+						data >> m_MaxPlayers;
+						data >> m_LevelType;
 
-    data >> url >> hash;
+						if (this->GetProtocolVersion() >= Version::Minecraft_1_15_2){
+							VarInt viewDistance;
 
-    m_Url = url.GetUTF16();
-    m_Hash = hash.GetUTF8();
+							data >> viewDistance;
+						}
 
-    return true;
-}
+						data >> m_ReducedDebug;
 
-void ResourcePackSendPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+						if (this->GetProtocolVersion() >= Version::Minecraft_1_15_2){
+							bool respawnScreen;
+							data >> respawnScreen;
+						}
+					}
+					return true;
+				}
 
-RespawnPacket::RespawnPacket() {
-    
-}
+				void JoinGamePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-bool RespawnPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_Dimension;
+				MapPacket::MapPacket(){
 
-    if (GetProtocolVersion() <= Version::Minecraft_1_13_2) {
-      data >> m_Difficulty;
-    } else if (GetProtocolVersion() >= Version::Minecraft_1_15_2) {
-      u64 hashedSeed;
-      data >> hashedSeed;
-    }
+				}
 
-    data >> m_Gamemode;
+				bool MapPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt mapId, count;
 
-    MCString level;
-    data >> level;
+					data >> mapId >> m_Scale >> m_TrackPosition >> count;
+					m_MapId = mapId.GetInt();
 
-    m_Level = level.GetUTF16();
+					for (s32 i = 0; i < count.GetInt(); ++i){
+						Icon icon;
+						data >> icon.direction >> icon.x >> icon.z;
 
-    return true;
-}
+						icon.type = icon.direction & 0x0F;
+						icon.direction = (icon.direction & 0xF0) >> 4;
 
-void RespawnPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+						m_Icons.push_back(icon);
+					}
 
-EntityHeadLookPacket::EntityHeadLookPacket() {
-    
-}
+					data >> m_Columns;
 
-bool EntityHeadLookPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
-    data >> eid;
-    data >> m_Yaw;
-    m_EntityId = eid.GetInt();
-    return true;
-}
+					if (m_Columns > 0){
+						VarInt length;
 
-void EntityHeadLookPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+						data >> m_Rows >> m_X >> m_Z >> length;
+						data.ReadSome(m_Data, length.GetInt());
+					}
 
-WorldBorderPacket::WorldBorderPacket() {
-    
-}
+					return true;
+				}
 
-bool WorldBorderPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt action;
-
-    data >> action;
-
-    m_Action = (Action)action.GetInt();
-
-    switch (m_Action) {
-    case Action::SetSize:
-    {
-        data >> m_Diameter;
-    }
-    break;
-    case Action::LerpSize:
-    {
-        data >> m_OldDiameter;
-        data >> m_Diameter;
-        VarLong speed;
-
-        data >> speed;
-        m_Speed = speed.GetLong();
-    }
-    break;
-    case Action::SetCenter:
-    {
-        data >> m_X >> m_Z;
-    }
-    break;
-    case Action::Initialize:
-    {
-        data >> m_X >> m_Z;
-
-        data >> m_OldDiameter >> m_Diameter;
-
-        VarLong speed;
-        data >> speed;
-        m_Speed = speed.GetLong();
-
-        VarInt portalTeleportBoundary, warningTime, warningBlocks;
-
-        data >> portalTeleportBoundary >> warningTime >> warningBlocks;
-
-        m_PortalTeleportBoundary = portalTeleportBoundary.GetInt();
-        m_WarningTime = warningTime.GetInt();
-        m_WarningBlocks = warningBlocks.GetInt();
-    }
-    break;
-    case Action::SetWarningTime:
-    {
-        VarInt warningTime;
-        data >> warningTime;
-        m_WarningTime = warningTime.GetInt();
-    }
-    break;
-    case Action::SetWarningBlocks:
-    {
-        VarInt warningBlocks;
-        data >> warningBlocks;
-        m_WarningBlocks = warningBlocks.GetInt();
-    }
-    break;
-    }
-    return true;
-}
+				void MapPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-void WorldBorderPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
 
-CameraPacket::CameraPacket() {
-    
-}
+				EntityRelativeMovePacket::EntityRelativeMovePacket(){
 
-bool CameraPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt id;
-    data >> id;
-    m_EntityId = id.GetInt();
-    return true;
-}
+				}
 
-void CameraPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				bool EntityRelativeMovePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
 
-HeldItemChangePacket::HeldItemChangePacket() {
-    
-}
+					data >> eid;
+					data >> m_Delta.x >> m_Delta.y >> m_Delta.z;
+					data >> m_OnGround;
 
-bool HeldItemChangePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_Slot;
-    return true;
-}
+					m_EntityId = eid.GetInt();
 
-void HeldItemChangePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					return true;
+				}
 
-DisplayScoreboardPacket::DisplayScoreboardPacket() {
-    
-}
+				void EntityRelativeMovePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-bool DisplayScoreboardPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    u8 pos;
-    MCString name;
+				EntityLookAndRelativeMovePacket::EntityLookAndRelativeMovePacket(){
 
-    data >> pos >> name;
+				}
 
-    m_Position = (ScoreboardPosition)pos;
-    m_Name = name.GetUTF16();
+				bool EntityLookAndRelativeMovePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
 
-    return true;
-}
+					data >> eid >> m_Delta.x >> m_Delta.y >> m_Delta.z;
+					data >> m_Yaw >> m_Pitch;
+					data >> m_OnGround;
 
-void DisplayScoreboardPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					m_EntityId = eid.GetInt();
 
+					return true;
+				}
 
-EntityMetadataPacket::EntityMetadataPacket() : InboundPacket(), m_Metadata(m_ProtocolVersion) {
-    
-}
+				void EntityLookAndRelativeMovePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-bool EntityMetadataPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
+				EntityLookPacket::EntityLookPacket(){
 
-    m_Metadata.SetProtocolVersion(m_ProtocolVersion);
+				}
 
-    data >> eid;
-    data >> m_Metadata;
+				bool EntityLookPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
 
-    m_EntityId = eid.GetInt();
+					data >> eid;
 
-    return true;
-}
+					m_EntityId = eid.GetInt();
 
-void EntityMetadataPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					data >> m_Yaw >> m_Pitch;
+					data >> m_OnGround;
+					return true;
+				}
 
-AttachEntityPacket::AttachEntityPacket() {
-    
-}
+				void EntityLookPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-bool AttachEntityPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_EntityId;
-    data >> m_VehicleId;
+				EntityPacket::EntityPacket(){
 
-    return true;
-}
+				}
 
-void AttachEntityPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				bool EntityPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
+					data >> eid;
+					m_EntityId = eid.GetInt();
+					return true;
+				}
 
-EntityVelocityPacket::EntityVelocityPacket() {
-    
-}
+				void EntityPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-bool EntityVelocityPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
-    data >> eid;
-    data >> m_Velocity.x;
-    data >> m_Velocity.y;
-    data >> m_Velocity.z;
-    m_EntityId = eid.GetInt();
-    return true;
-}
+				VehicleMovePacket::VehicleMovePacket(){
 
-void EntityVelocityPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				}
 
-EntityEquipmentPacket::EntityEquipmentPacket() {
-    
-}
+				bool VehicleMovePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_Position.x >> m_Position.y >> m_Position.z >> m_Yaw >> m_Pitch;
+					return true;
+				}
 
-bool EntityEquipmentPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
-    VarInt equipmentSlot;
+				void VehicleMovePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    data >> eid;
-    data >> equipmentSlot;
-    m_Item.Deserialize(data, m_ProtocolVersion);
+				OpenSignEditorPacket::OpenSignEditorPacket(){
 
-    m_EntityId = eid.GetInt();
-    m_EquipmentSlot = (EquipmentSlot)equipmentSlot.GetInt();
+				}
 
-    return true;
-}
+				bool OpenSignEditorPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					Position position;
 
-void EntityEquipmentPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					data >> position;
 
-SetExperiencePacket::SetExperiencePacket() {
-    
-}
+					m_Position.x = position.GetX();
+					m_Position.y = position.GetY();
+					m_Position.z = position.GetZ();
+					return true;
+				}
 
-bool SetExperiencePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt level, total;
-    data >> m_ExperienceBar >> level >> total;
-    m_Level = level.GetInt();
-    m_TotalExperience = level.GetInt();
-    return true;
-}
+				void OpenSignEditorPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-void SetExperiencePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				PlayerAbilitiesPacket::PlayerAbilitiesPacket(){
 
-UpdateHealthPacket::UpdateHealthPacket() {
-    
-}
+				}
 
-bool UpdateHealthPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt food;
-    data >> m_Health >> food >> m_Saturation;
-    m_Food = food.GetInt();
-    return true;
-}
+				bool PlayerAbilitiesPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_Flags;
+					data >> m_FlyingSpeed;
+					data >> m_FOVModifier;
 
-void UpdateHealthPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					return true;
+				}
 
-ScoreboardObjectivePacket::ScoreboardObjectivePacket() {
-    
-}
+				void PlayerAbilitiesPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-bool ScoreboardObjectivePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    MCString objective, value, type;
-    u8 mode;
+				CombatEventPacket::CombatEventPacket(){
 
-    data >> objective >> mode >> value >> type;
+				}
 
-    m_Objective = objective.GetUTF16();
-    m_Mode = (Mode)mode;
-    m_Value = value.GetUTF16();
-    m_Type = type.GetUTF16();
+				bool CombatEventPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt event;
 
-    return true;
-}
+					data >> event;
 
-void ScoreboardObjectivePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					m_Event = (Event)event.GetInt();
 
-SetPassengersPacket::SetPassengersPacket() {
-    
-}
+					if (m_Event == Event::EndCombat){
+						VarInt duration;
 
-bool SetPassengersPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid, count;
+						data >> duration;
 
-    data >> eid >> count;
-    m_EntityId = eid.GetInt();
+						m_Duration = duration.GetInt();
+						data >> m_EntityId;
+					}
+					else if (m_Event == Event::EntityDead){
+						VarInt pid;
+						data >> pid;
 
-    for (s32 i = 0; i < count.GetInt(); ++i) {
-        VarInt peid;
+						m_PlayerId = pid.GetInt();
+						data >> m_EntityId;
 
-        data >> peid;
-        m_Passengers.push_back(peid.GetInt());
-    }
+						MCString message;
+						data >> message;
 
-    return true;
-}
+						m_Message = message.GetUTF16();
+					}
 
-void SetPassengersPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					return true;
+				}
 
-TeamsPacket::TeamsPacket() {
-    
-}
+				void CombatEventPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-bool TeamsPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    MCString name;
-    u8 mode;
-
-    data >> name >> mode;
-
-    m_TeamName = name.GetUTF16();
-    m_Mode = (Mode)mode;
-
-    switch (m_Mode) {
-        case Mode::Create:
-        {
-            MCString display, prefix, suffix, visbility, collision;
-            VarInt count;
-
-            if (m_ProtocolVersion <= protocol::Version::Minecraft_1_12_2) {
-                data >> display >> prefix >> suffix >> m_FriendlyFlags >> visbility >> collision >> m_Color >> count;
-            } else {
-                VarInt formatting;
-                u8 friendlyFlags;
-                
-                data >> display >> friendlyFlags >> visbility >> collision >> formatting >> prefix >> suffix >> count;
-            }
-
-            m_TeamDisplayName = display.GetUTF16();
-            m_TeamPrefix = prefix.GetUTF16();
-            m_TeamSuffix = suffix.GetUTF16();
-            m_TagVisbility = visbility.GetUTF16();
-            m_CollisionRule = collision.GetUTF16();
-
-            for (s32 i = 0; i < count.GetInt(); ++i) {
-                MCString player;
-                data >> player;
-
-                m_Players.push_back(player.GetUTF16());
-            }
-        }
-        break;
-        case Mode::Remove:
-        {
-
-        }
-        break;
-        case Mode::Update:
-        {
-            MCString display, prefix, suffix, visbility, collision;
-
-            if (m_ProtocolVersion <= protocol::Version::Minecraft_1_12_2) {
-                data >> display >> prefix >> suffix >> m_FriendlyFlags >> visbility >> collision >> m_Color;
-            } else {
-                u8 friendlyFlags;
-                VarInt formatting;
-                data >> display >> friendlyFlags >> visbility >> collision >> formatting >> prefix >> suffix;;
-            }
-            
-            m_TeamDisplayName = display.GetUTF16();
-            m_TeamPrefix = prefix.GetUTF16();
-            m_TeamSuffix = suffix.GetUTF16();
-            m_TagVisbility = visbility.GetUTF16();
-            m_CollisionRule = collision.GetUTF16();
-        }
-        break;
-        case Mode::AddPlayer:
-        case Mode::RemovePlayer:
-        {
-            VarInt count;
-
-            data >> count;
-
-            for (s32 i = 0; i < count.GetInt(); ++i) {
-                MCString player;
-                data >> player;
-
-                m_Players.push_back(player.GetUTF16());
-            }
-        }
-        break;
-    }
-
-    return true;
-}
+				PlayerListItemPacket::PlayerListItemPacket(){
 
-void TeamsPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				}
 
-UpdateScorePacket::UpdateScorePacket() {
-    
-}
+				bool PlayerListItemPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt action;
+					VarInt numPlayers;
 
-bool UpdateScorePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    MCString name, objective;
-    u8 action;
-
-    data >> name >> action >> objective;
-
-    m_ScoreName = name.GetUTF16();
-    m_Action = (Action)action;
-    m_Objective = objective.GetUTF16();
-    
-    if (m_Action != Action::Remove) {
-        VarInt value;
-        data >> value;
-        m_Value = value.GetInt();
-    }
-    return true;
-}
+					data >> action;
+					data >> numPlayers;
 
-void UpdateScorePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					m_Action = (Action)action.GetInt();
 
-SpawnPositionPacket::SpawnPositionPacket() {
-    
-}
+					for (s32 i = 0; i < numPlayers.GetInt(); ++i){
+						UUID uuid;
+						data >> uuid;
 
-bool SpawnPositionPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_Location;
-    return true;
-}
+						ActionDataPtr actionData = std::make_shared<ActionData>();
+						actionData->uuid = uuid;
 
-void SpawnPositionPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
 
-TimeUpdatePacket::TimeUpdatePacket() {
-    
-}
 
-bool TimeUpdatePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_WorldAge;
-    data >> m_Time;
-    return true;
-}
+						switch (m_Action){
+						case Action::AddPlayer:
+						{
+							MCString name;
+							VarInt numProperties;
 
-void TimeUpdatePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+							data >> name;
+							data >> numProperties;
 
-TitlePacket::TitlePacket() {
-    
-}
+							actionData->name = name.GetUTF16();
 
-bool TitlePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt action;
-
-    data >> action;
-
-    m_Action = (Action)action.GetInt();
-
-    switch (m_Action) {
-        case Action::SetTitle:
-        case Action::SetSubtitle:
-        case Action::SetActionBar:
-        {
-            MCString text;
-            data >> text;
-
-            m_Text = text.GetUTF16();
-        }
-        break;
-        case Action::SetDisplay:
-        {
-            data >> m_FadeIn >> m_Stay >> m_FadeOut;
-        }
-        break;
-        default:
-        break;
-    }
-    
-    return true;
-}
+							for (s32 j = 0; j < numProperties.GetInt(); ++j){
+								MCString propertyName;
+								MCString propertyValue;
+								u8 isSigned;
+								MCString signature;
 
-void TitlePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+								data >> propertyName;
+								data >> propertyValue;
+								data >> isSigned;
+								if (isSigned)
+									data >> signature;
 
-SoundEffectPacket::SoundEffectPacket() {
-    
-}
+								actionData->properties[propertyName.GetUTF16()] = propertyValue.GetUTF16();
+							}
 
-bool SoundEffectPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt id, category;
-    
-    data >> id >> category;
+							VarInt gameMode, ping;
+							data >> gameMode;
+							data >> ping;
 
-    m_SoundId = id.GetInt();
-    m_Category = (SoundCategory)category.GetInt();
+							u8 hasDisplayName;
+							MCString displayName;
 
-    FixedPointNumber<int> x, y, z;
-    data >> x >> y >> z;
+							data >> hasDisplayName;
+							if (hasDisplayName)
+								data >> displayName;
 
-    m_Position.x = (double)x.GetFloat();
-    m_Position.y = (double)y.GetFloat();
-    m_Position.z = (double)z.GetFloat();
-    data >> m_Volume;
-    data >> m_Pitch;
+							actionData->gamemode = gameMode.GetInt();
+							actionData->ping = ping.GetInt();
+							actionData->displayName = displayName.GetUTF16();
+						}
+						break;
+						case Action::UpdateGamemode:
+						{
+							VarInt gameMode;
+							data >> gameMode;
 
-    return true;
-}
+							actionData->gamemode = gameMode.GetInt();
+						}
+						break;
+						case Action::UpdateLatency:
+						{
+							VarInt ping;
+							data >> ping;
 
-void SoundEffectPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+							actionData->ping = ping.GetInt();
+						}
+						break;
+						case Action::UpdateDisplay:
+						{
+							u8 hasDisplayName;
+							MCString displayName;
 
-PlayerListHeaderAndFooterPacket::PlayerListHeaderAndFooterPacket() {
-    
-}
+							data >> hasDisplayName;
+							if (hasDisplayName)
+								data >> displayName;
 
-bool PlayerListHeaderAndFooterPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    MCString header, footer;
+							actionData->displayName = displayName.GetUTF16();
+						}
+						break;
+						case Action::RemovePlayer:
+						{
+							std::shared_ptr<ActionData> actionData = std::make_shared<ActionData>();
+							actionData->uuid = uuid;
+						}
+						break;
+						}
 
-    data >> header >> footer;
+						m_Data.push_back(actionData);
+					}
 
-    m_Header = header.GetUTF16();
-    m_Footer = footer.GetUTF16();
+					return true;
+				}
 
-    return true;
-}
+				void PlayerListItemPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-void PlayerListHeaderAndFooterPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				PlayerPositionAndLookPacket::PlayerPositionAndLookPacket(){
 
-CollectItemPacket::CollectItemPacket() {
-    
-}
+				}
 
-bool CollectItemPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt collected, collector, count;
+				bool PlayerPositionAndLookPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_Position.x >> m_Position.y >> m_Position.z;
+					data >> m_Yaw >> m_Pitch;
+					data >> m_Flags;
+					VarInt tid;
+					data >> tid;
 
-    data >> collected >> collector >> count;
+					m_TeleportId = tid.GetInt();
+					return true;
+				}
 
-    m_Collected = collected.GetInt();
-    m_Collector = collector.GetInt();
-    m_PickupCount = count.GetInt();
-    
-    return true;
-}
+				void PlayerPositionAndLookPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-void CollectItemPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				UseBedPacket::UseBedPacket(){
 
-EntityTeleportPacket::EntityTeleportPacket() {
-    
-}
+				}
 
-bool EntityTeleportPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
+				bool UseBedPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
+					Position location;
 
-    data >> eid;
+					data >> eid >> location;
 
-    m_EntityId = eid.GetInt();
+					m_EntityId = eid.GetInt();
+					m_Position.x = location.GetX();
+					m_Position.y = location.GetY();
+					m_Position.z = location.GetZ();
+					return true;
+				}
 
-    data >> m_Position.x >> m_Position.y >> m_Position.z;
+				void UseBedPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    data >> m_Yaw >> m_Pitch;
-    data >> m_OnGround;
+				DestroyEntitiesPacket::DestroyEntitiesPacket(){
 
-    return true;
-}
+				}
 
-void EntityTeleportPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				bool DestroyEntitiesPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt count;
 
-EntityPropertiesPacket::EntityPropertiesPacket() {
-    
-}
+					data >> count;
 
-bool EntityPropertiesPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid;
+					for (s32 i = 0; i < count.GetInt(); ++i){
+						VarInt eid;
 
-    data >> eid;
-    m_EntityId = eid.GetInt();
+						data >> eid;
 
-    s32 propertyCount;
-    data >> propertyCount;
+						m_EntityIds.push_back(eid.GetInt());
+					}
+					return true;
+				}
 
-    for (s32 i = 0; i < propertyCount; ++i) {
-        MCString key;
-        double value;
+				void DestroyEntitiesPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-        data >> key;
-        data >> value;
+				UnlockRecipesPacket::UnlockRecipesPacket(){
 
-        mc::entity::Attribute attribute(key.GetUTF16(), value);
+				}
 
-        VarInt modifierCount;
-        data >> modifierCount;
+				bool UnlockRecipesPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					if (GetProtocolVersion() >= Version::Minecraft_1_16_5){
+						VarInt action;
 
-        for (s32 j = 0; j < modifierCount.GetInt(); ++j) {
-            UUID uuid;
-            double amount;
-            u8 operation;
+						data >> action;
+						m_Action = (Action)action.GetShort();
+					}
+					else{
+						s16 action;
 
-            data >> uuid;
-            data >> amount;
-            data >> operation;
+						data >> action;
+						m_Action = (Action)action;
+					}
 
-            mc::entity::Modifier modifier(uuid, amount, (mc::entity::ModifierOperation)operation);
+					data >> m_OpenCraftingBook;
+					data >> m_CraftingFilter;
 
-            attribute.AddModifier(modifier);
-        }
+					if (GetProtocolVersion() >= Version::Minecraft_1_16_5){
+						data >> m_OpenSmeltingBook;
+						data >> m_SmeltingFilter;
+						data >> m_OpenBlastFurnaceBook;
+						data >> m_BlastFurnaceFilter;
+						data >> m_OpenSmokerBook;
+						data >> m_SmokerFilter;
+					}
 
-        m_Properties.insert(std::make_pair(attribute.GetKey(), attribute));
-    }
-    return true;
-}
+					VarInt size1;
+					data >> size1;
 
-void EntityPropertiesPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					m_Array1.resize(size1.GetInt());
 
-EntityEffectPacket::EntityEffectPacket() {
-    
-}
+					for (s32 i = 0; i < size1.GetInt(); ++i){
+						VarInt id;
 
-bool EntityEffectPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt eid, duration;
-    data >> eid >> m_EffectId >> m_Amplifier >> duration >> m_Flags;
-    m_EntityId = eid.GetInt();
-    m_Duration = duration.GetInt();
-    return true;
-}
+						data >> id;
 
-void EntityEffectPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+						m_Array1[i] = id.GetInt();
+					}
 
-AdvancementProgressPacket::AdvancementProgressPacket() {
+					if (m_Action == Action::Initialize){
+						VarInt size2;
+						data >> size2;
 
-}
+						m_Array2.resize(size2.GetInt());
 
-bool AdvancementProgressPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    bool hasId;
-    data >> hasId;
+						for (s32 i = 0; i < size2.GetInt(); ++i){
+							VarInt id;
 
-    if (hasId) {
-        MCString id;
+							data >> id;
 
-        data >> id;
+							m_Array2[i] = id.GetInt();
+						}
+					}
 
-        m_Id = id.GetUTF16();
-    }
+					return true;
+				}
 
-    return true;
-}
+				void UnlockRecipesPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-void AdvancementProgressPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				RemoveEntityEffectPacket::RemoveEntityEffectPacket(){
 
-CraftRecipeResponsePacket::CraftRecipeResponsePacket() {
-    
-}
+				}
 
-bool CraftRecipeResponsePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt recipeId;
+				bool RemoveEntityEffectPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
+					data >> eid >> m_EffectId;
+					m_EntityId = eid.GetInt();
+					return true;
+				}
 
-    data >> m_WindowId >> recipeId;
+				void RemoveEntityEffectPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    m_RecipeId = recipeId.GetInt();
-    
-    return true;
-}
+				ResourcePackSendPacket::ResourcePackSendPacket(){
 
-void CraftRecipeResponsePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				}
 
+				bool ResourcePackSendPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					MCString url, hash;
 
-// Login packets
-DisconnectPacket::DisconnectPacket() {
-    m_ProtocolState = protocol::State::Login;
-}
+					data >> url >> hash;
 
-bool DisconnectPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    // Update the protocol state so the login and play versions of this are handled correctly.
-    if (m_Connection)
-        m_ProtocolState = m_Connection->GetProtocolState();
+					m_Url = url.GetUTF16();
+					m_Hash = hash.GetUTF8();
 
-    data >> m_Reason;
-    return true;
-}
+					return true;
+				}
 
-void DisconnectPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				void ResourcePackSendPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-EncryptionRequestPacket::EncryptionRequestPacket() {
-    m_ProtocolState = protocol::State::Login;
-}
+				RespawnPacket::RespawnPacket(){
 
-bool EncryptionRequestPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    VarInt pubKeyLen;
-    VarInt verifyTokenLen;
+				}
 
-    data >> m_ServerId;
+				bool RespawnPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					if (GetProtocolVersion() >= Version::Minecraft_1_16_5){
+						nbt::NBT Dimension;
+						data >> Dimension;
+					}
+					else{
+						data >> m_Dimension;
+					}
 
-    data >> pubKeyLen;
-    data.ReadSome(m_PublicKey, pubKeyLen.GetInt());
+					if (GetProtocolVersion() >= Version::Minecraft_1_16_5){
+						MCString WorldName;
+						data >> WorldName;
+					}
 
-    data >> verifyTokenLen;
-    data.ReadSome(m_VerifyToken, verifyTokenLen.GetInt());
+					if (GetProtocolVersion() <= Version::Minecraft_1_13_2){
+						data >> m_Difficulty;
+					}
+					else if (GetProtocolVersion() >= Version::Minecraft_1_15_2){
+						u64 hashedSeed;
+						data >> hashedSeed;
+					}
 
-    return true;
-}
+					data >> m_Gamemode;
 
-void EncryptionRequestPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					MCString level;
+					data >> level;
 
-LoginSuccessPacket::LoginSuccessPacket() {
-    m_ProtocolState = protocol::State::Login;
-}
+					m_Level = level.GetUTF16();
 
-bool LoginSuccessPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_UUID;
-    data >> m_Username;
-    return true;
-}
+					return true;
+				}
 
-void LoginSuccessPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				void RespawnPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-SetCompressionPacket::SetCompressionPacket() {
-    m_ProtocolState = protocol::State::Login;
-}
+				EntityHeadLookPacket::EntityHeadLookPacket(){
 
-bool SetCompressionPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_MaxPacketSize;
-    return true;
-}
+				}
 
-void SetCompressionPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+				bool EntityHeadLookPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
+					data >> eid;
+					data >> m_Yaw;
+					m_EntityId = eid.GetInt();
+					return true;
+				}
 
-namespace status {
+				void EntityHeadLookPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-ResponsePacket::ResponsePacket() {
-    m_ProtocolState = protocol::State::Status;
-}
+				WorldBorderPacket::WorldBorderPacket(){
 
-bool ResponsePacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    MCString response;
+				}
 
-    data >> response;
+				bool WorldBorderPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt action;
 
-    m_Response = response.GetUTF16();
+					data >> action;
 
-    return true;
-}
+					m_Action = (Action)action.GetInt();
 
-void ResponsePacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+					switch (m_Action){
+					case Action::SetSize:
+					{
+						data >> m_Diameter;
+					}
+					break;
+					case Action::LerpSize:
+					{
+						data >> m_OldDiameter;
+						data >> m_Diameter;
+						VarLong speed;
 
-PongPacket::PongPacket() {
-    m_ProtocolState = protocol::State::Status;
-}
+						data >> speed;
+						m_Speed = speed.GetLong();
+					}
+					break;
+					case Action::SetCenter:
+					{
+						data >> m_X >> m_Z;
+					}
+					break;
+					case Action::Initialize:
+					{
+						data >> m_X >> m_Z;
 
-bool PongPacket::Deserialize(DataBuffer& data, std::size_t packetLength) {
-    data >> m_Payload;
+						data >> m_OldDiameter >> m_Diameter;
 
-    return true;
-}
+						VarLong speed;
+						data >> speed;
+						m_Speed = speed.GetLong();
 
-void PongPacket::Dispatch(PacketHandler* handler) {
-    handler->HandlePacket(this);
-}
+						VarInt portalTeleportBoundary, warningTime, warningBlocks;
 
-} // ns status
+						data >> portalTeleportBoundary >> warningTime >> warningBlocks;
 
-} // ns in
+						m_PortalTeleportBoundary = portalTeleportBoundary.GetInt();
+						m_WarningTime = warningTime.GetInt();
+						m_WarningBlocks = warningBlocks.GetInt();
+					}
+					break;
+					case Action::SetWarningTime:
+					{
+						VarInt warningTime;
+						data >> warningTime;
+						m_WarningTime = warningTime.GetInt();
+					}
+					break;
+					case Action::SetWarningBlocks:
+					{
+						VarInt warningBlocks;
+						data >> warningBlocks;
+						m_WarningBlocks = warningBlocks.GetInt();
+					}
+					break;
+					}
+					return true;
+				}
 
-namespace out {
+				void WorldBorderPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-// Handshake packets
-HandshakePacket::HandshakePacket(s32 protocol, std::string server, u16 port, protocol::State state) 
-    : m_ProtocolVersion(protocol), m_Server(server), m_Port(port), m_NewState((s32)state)
-{
-    
-}
+				CameraPacket::CameraPacket(){
 
-DataBuffer HandshakePacket::Serialize() const {
-    DataBuffer buffer;
+				}
 
-    buffer << m_Id << m_ProtocolVersion << m_Server << m_Port << m_NewState;
+				bool CameraPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt id;
+					data >> id;
+					m_EntityId = id.GetInt();
+					return true;
+				}
 
-    return buffer;
-}
+				void CameraPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-// Login packets
+				HeldItemChangePacket::HeldItemChangePacket(){
 
-LoginStartPacket::LoginStartPacket(const std::string& name) 
-    : m_Name(name)
-{
-    
-}
+				}
 
-DataBuffer LoginStartPacket::Serialize() const {
-    DataBuffer buffer;
-    buffer << m_Id;
-    buffer << m_Name;
-    return buffer;
-}
+				bool HeldItemChangePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_Slot;
+					return true;
+				}
 
-EncryptionResponsePacket::EncryptionResponsePacket(const std::string& sharedSecret, const std::string& verifyToken)
-    : m_SharedSecret(sharedSecret), m_VerifyToken(verifyToken)
-{
-    
-}
+				void HeldItemChangePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-DataBuffer EncryptionResponsePacket::Serialize() const {
-    DataBuffer buffer;
-
-    buffer << m_Id;
-
-    VarInt sharedLength = (s32)m_SharedSecret.length();
-    VarInt verifyLength = (s32)m_VerifyToken.length();
-    buffer << sharedLength;
-    buffer << m_SharedSecret;
-    buffer << verifyLength;
-    buffer << m_VerifyToken;
-    return buffer;
-}
+				DisplayScoreboardPacket::DisplayScoreboardPacket(){
 
-LoginPluginResponsePacket::LoginPluginResponsePacket(u32 messageId, bool successful, const std::string& data)
-  : m_MessageId(messageId), m_Successful(successful), m_Data(data)
-{
+				}
 
-}
+				bool DisplayScoreboardPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					u8 pos;
+					MCString name;
 
-DataBuffer LoginPluginResponsePacket::Serialize() const {
-  DataBuffer buffer;
+					data >> pos >> name;
 
-  buffer << m_Id;
+					m_Position = (ScoreboardPosition)pos;
+					m_Name = name.GetUTF16();
 
-  VarInt messageId((s32)m_MessageId);
+					return true;
+				}
 
-  buffer << messageId << m_Successful;
-  buffer << m_Data;
+				void DisplayScoreboardPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-  return buffer;
-}
 
-// Play packets
+				EntityMetadataPacket::EntityMetadataPacket(): InboundPacket(), m_Metadata(m_ProtocolVersion){
 
-TeleportConfirmPacket::TeleportConfirmPacket(s32 teleportId) : m_TeleportId(teleportId) {
-    
-}
+				}
 
-DataBuffer TeleportConfirmPacket::Serialize() const {
-    DataBuffer buffer;
-    VarInt teleportId(m_TeleportId);
+				bool EntityMetadataPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
 
-    buffer << m_Id;
-    buffer << teleportId;
+					m_Metadata.SetProtocolVersion(m_ProtocolVersion);
 
-    return buffer;
-}
+					data >> eid;
+					data >> m_Metadata;
 
-PrepareCraftingGridPacket::PrepareCraftingGridPacket(u8 windowId, s16 actionNumber, 
-    const std::vector<Entry>& returnEntries, const std::vector<Entry>& prepareEntries) 
-    : m_WindowId(windowId),
-      m_ActionNumber(actionNumber),
-      m_ReturnEntries(returnEntries),
-      m_PrepareEntries(prepareEntries)
-{
+					m_EntityId = eid.GetInt();
 
-}
+					return true;
+				}
 
-DataBuffer PrepareCraftingGridPacket::Serialize() const {
-    DataBuffer buffer;
+				void EntityMetadataPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    buffer << m_Id;
-    buffer << m_WindowId;
-    buffer << m_ActionNumber;
+				AttachEntityPacket::AttachEntityPacket(){
 
-    s16 returnSize = static_cast<s16>(m_ReturnEntries.size());
+				}
 
-    buffer << returnSize;
-    for (auto&& entry : m_ReturnEntries) {
-        buffer << entry.item.Serialize(m_ProtocolVersion);
-        buffer << entry.craftingSlot;
-        buffer << entry.playerSlot;
-    }
+				bool AttachEntityPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_EntityId;
+					data >> m_VehicleId;
 
-    s16 prepareSize = static_cast<s16>(m_PrepareEntries.size());
+					return true;
+				}
 
-    buffer << prepareSize;
-    for (auto&& entry : m_PrepareEntries) {
-        buffer << entry.item.Serialize(m_ProtocolVersion);
-        buffer << entry.craftingSlot;
-        buffer << entry.playerSlot;
-    }
+				void AttachEntityPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    return buffer;
-}
+				EntityVelocityPacket::EntityVelocityPacket(){
 
-CraftRecipeRequestPacket::CraftRecipeRequestPacket(u8 windowId, s32 recipeId, bool makeAll)
-    : m_WindowId(windowId),
-      m_RecipeId(recipeId),
-      m_MakeAll(makeAll)
-{
+				}
 
-}
+				bool EntityVelocityPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
+					data >> eid;
+					data >> m_Velocity.x;
+					data >> m_Velocity.y;
+					data >> m_Velocity.z;
+					m_EntityId = eid.GetInt();
+					return true;
+				}
 
-DataBuffer CraftRecipeRequestPacket::Serialize() const {
-    VarInt recipeId(m_RecipeId);
-    DataBuffer buffer;
+				void EntityVelocityPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    buffer << m_Id;
-    buffer << m_WindowId;
-    buffer << recipeId;
-    buffer << m_MakeAll;
+				EntityEquipmentPacket::EntityEquipmentPacket(){
 
-    return buffer;
-}
+				}
 
-TabCompletePacket::TabCompletePacket(const std::wstring& text, bool assumeCommand) 
-    : m_Text(text), m_AssumeCommand(assumeCommand), m_HasPosition(false)
-{
-    
-}
+				bool EntityEquipmentPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
+					VarInt equipmentSlot;
 
-TabCompletePacket::TabCompletePacket(const std::wstring& text, bool assumeCommand, bool hasPosition, Position lookingAt)
-    : m_Text(text), m_AssumeCommand(assumeCommand), m_HasPosition(hasPosition), m_LookingAt(lookingAt)
-{
-    
-}
+					data >> eid;
+					data >> equipmentSlot;
+					m_Item.Deserialize(data, m_ProtocolVersion);
 
-DataBuffer TabCompletePacket::Serialize() const {
-    DataBuffer buffer;
-    MCString text(m_Text);
+					m_EntityId = eid.GetInt();
+					m_EquipmentSlot = (EquipmentSlot)equipmentSlot.GetInt();
 
-    buffer << m_Id << text;
-    
-    if (m_ProtocolVersion <= protocol::Version::Minecraft_1_12_2) {
-        buffer << m_AssumeCommand << m_HasPosition;
+					return true;
+				}
 
-        if (m_HasPosition)
-            buffer << m_LookingAt;
-    }
+				void EntityEquipmentPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    return buffer;
-}
+				SetExperiencePacket::SetExperiencePacket(){
 
-ChatPacket::ChatPacket(const std::wstring& message) : m_Message(message) {
-    
-}
+				}
 
-ChatPacket::ChatPacket(const std::string& message) : m_Message(message.begin(), message.end()) {
-    
-}
+				bool SetExperiencePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt level, total;
+					data >> m_ExperienceBar >> level >> total;
+					m_Level = level.GetInt();
+					m_TotalExperience = level.GetInt();
+					return true;
+				}
 
-DataBuffer ChatPacket::Serialize() const {
-    MCString out(m_Message);
-    DataBuffer buffer;
+				void SetExperiencePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    buffer << m_Id;
-    buffer << out;
+				UpdateHealthPacket::UpdateHealthPacket(){
 
-    return buffer;
-}
+				}
 
-ClientStatusPacket::ClientStatusPacket(Action action) : m_Action(action) {
-    
-}
+				bool UpdateHealthPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt food;
+					data >> m_Health >> food >> m_Saturation;
+					m_Food = food.GetInt();
+					return true;
+				}
 
-DataBuffer ClientStatusPacket::Serialize() const {
-    VarInt action(m_Action);
-    DataBuffer buffer;
+				void UpdateHealthPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    buffer << m_Id;
-    buffer << action;
+				ScoreboardObjectivePacket::ScoreboardObjectivePacket(){
 
-    return buffer;
-}
+				}
 
-ClientSettingsPacket::ClientSettingsPacket(const std::wstring& locale, u8 viewDistance, ChatMode chatMode, bool chatColors, u8 skinFlags, MainHand hand)
-    : m_Locale(locale), m_ViewDistance(viewDistance), m_ChatMode(chatMode),
-    m_ChatColors(chatColors), m_SkinFlags(skinFlags), m_MainHand(hand)
-{
-    
-}
+				bool ScoreboardObjectivePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					MCString objective, value;
+					u8 mode;
+					data >> objective >> mode;
+					if (GetProtocolVersion() < Version::Minecraft_1_16_5){
+						MCString type;
+						if (mode == 0 || mode == 2)
+							data >> value >> type;
+						m_Type = type.GetUTF16();
+					}
+					else{
+						VarInt type;
+						if (mode == 0 || mode == 2)
+							data >> value >> type;
+						m_Type = std::to_wstring(type.GetInt());
+					}
 
-DataBuffer ClientSettingsPacket::Serialize() const {
-    MCString locale(m_Locale);
-    DataBuffer buffer;
-    VarInt chatMode((int)m_ChatMode);
-    VarInt hand((int)m_MainHand);
-
-    buffer << m_Id;
-    buffer << locale;
-    buffer << m_ViewDistance;
-    buffer << chatMode;
-    buffer << m_ChatColors;
-    buffer << m_SkinFlags;
-    buffer << hand;
-
-    return buffer;
-}
+					m_Objective = objective.GetUTF16();
+					m_Mode = (Mode)mode;
+					m_Value = value.GetUTF16();
 
 
-ConfirmTransactionPacket::ConfirmTransactionPacket(u8 windowId, s16 action, bool accepted) 
-    : m_WindowId(windowId), m_Action(action), m_Accepted(accepted)
-{
-    
-}
+					return true;
+				}
 
-DataBuffer ConfirmTransactionPacket::Serialize() const {
-    DataBuffer buffer;
+				void ScoreboardObjectivePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    buffer << m_Id;
-    buffer << m_WindowId;
-    buffer << m_Action;
-    buffer << m_Accepted;
+				SetPassengersPacket::SetPassengersPacket(){
 
-    return buffer;
-}
+				}
 
-EnchantItemPacket::EnchantItemPacket(u8 windowId, u8 enchantmentIndex) {
-    
-}
+				bool SetPassengersPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid, count;
 
-DataBuffer EnchantItemPacket::Serialize() const {
-    DataBuffer buffer;
+					data >> eid >> count;
+					m_EntityId = eid.GetInt();
 
-    buffer << m_Id << m_WindowId << m_EnchantmentIndex;
+					for (s32 i = 0; i < count.GetInt(); ++i){
+						VarInt peid;
 
-    return buffer;
-}
+						data >> peid;
+						m_Passengers.push_back(peid.GetInt());
+					}
 
-ClickWindowPacket::ClickWindowPacket(u8 windowId, u16 slotIndex, u8 button, u16 action, s32 mode, inventory::Slot clickedItem) 
-    : m_WindowId(windowId), m_SlotIndex(slotIndex), m_Button(button), m_Action(action), m_Mode(mode), m_ClickedItem(clickedItem)
-{
-    
-}
+					return true;
+				}
 
-DataBuffer ClickWindowPacket::Serialize() const {
-    DataBuffer buffer;
-    
-    buffer << m_Id;
-    buffer << m_WindowId << m_SlotIndex << m_Button << m_Action;
-    VarInt mode(m_Mode);
-    buffer << mode << m_ClickedItem.Serialize(m_ProtocolVersion);
-    
-    return buffer;
-}
+				void SetPassengersPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-CloseWindowPacket::CloseWindowPacket(u8 windowId)
-    : m_WindowId(windowId)
-{
-    
-}
+				TeamsPacket::TeamsPacket(){
 
-DataBuffer CloseWindowPacket::Serialize() const {
-    DataBuffer buffer;
+				}
 
-    buffer << m_Id;
-    buffer << m_WindowId;
+				bool TeamsPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					MCString name;
+					u8 mode;
 
-    return buffer;
-}
+					data >> name >> mode;
 
-PluginMessagePacket::PluginMessagePacket(const std::wstring& channel, const std::string& data) 
-    : m_Channel(channel), m_Data(data)
-{
-    
-}
+					m_TeamName = name.GetUTF16();
+					m_Mode = (Mode)mode;
 
-DataBuffer PluginMessagePacket::Serialize() const {
-    DataBuffer buffer;
-    MCString channel(m_Channel);
+					switch (m_Mode){
+					case Mode::Create:
+					{
+						MCString display, prefix, suffix, visbility, collision;
+						VarInt count;
 
-    buffer << m_Id << channel;
-    buffer << m_Data;
+						if (m_ProtocolVersion <= protocol::Version::Minecraft_1_12_2){
+							data >> display >> prefix >> suffix >> m_FriendlyFlags >> visbility >> collision >> m_Color >> count;
+						}
+						else{
+							VarInt formatting;
+							u8 friendlyFlags;
 
-    return buffer;
-}
+							data >> display >> friendlyFlags >> visbility >> collision >> formatting >> prefix >> suffix >> count;
+						}
 
-UseEntityPacket::UseEntityPacket(EntityId target, Action action, Hand hand, Vector3f position)
-    : m_Target(target), m_Action(action), m_Hand(hand), m_Position(position)
-{
-    
-}
+						m_TeamDisplayName = display.GetUTF16();
+						m_TeamPrefix = prefix.GetUTF16();
+						m_TeamSuffix = suffix.GetUTF16();
+						m_TagVisbility = visbility.GetUTF16();
+						m_CollisionRule = collision.GetUTF16();
 
-DataBuffer UseEntityPacket::Serialize() const {
-    DataBuffer buffer;
-    VarInt target(m_Target);
-    VarInt type((int)m_Action);
-
-    buffer << m_Id;
-    buffer << target;
-    buffer << type;
-
-    if (m_Action == Action::InteractAt) {
-        buffer << m_Position.x;
-        buffer << m_Position.y;
-        buffer << m_Position.z;
-    }
-
-    if (m_Action == Action::Interact || m_Action == Action::InteractAt) {
-        VarInt hand((int)m_Hand);
-        buffer << hand;
-    }
-
-    return buffer;
-}
+						for (s32 i = 0; i < count.GetInt(); ++i){
+							MCString player;
+							data >> player;
 
-KeepAlivePacket::KeepAlivePacket(s64 id) : m_KeepAliveId(id) {
-    
-}
+							m_Players.push_back(player.GetUTF16());
+						}
+					}
+					break;
+					case Mode::Remove:
+					{
 
-DataBuffer KeepAlivePacket::Serialize() const {
-    DataBuffer buffer;
+					}
+					break;
+					case Mode::Update:
+					{
+						MCString display, prefix, suffix, visbility, collision;
 
-    buffer << m_Id;
+						if (m_ProtocolVersion <= protocol::Version::Minecraft_1_12_2){
+							data >> display >> prefix >> suffix >> m_FriendlyFlags >> visbility >> collision >> m_Color;
+						}
+						else{
+							u8 friendlyFlags;
+							VarInt formatting;
+							data >> display >> friendlyFlags >> visbility >> collision >> formatting >> prefix >> suffix;;
+						}
 
-    if (m_ProtocolVersion < Version::Minecraft_1_12_2) {
-        VarInt aliveId(m_KeepAliveId);
-    
-        buffer << aliveId;
-    } else {
-        buffer << m_KeepAliveId;
-    }
+						m_TeamDisplayName = display.GetUTF16();
+						m_TeamPrefix = prefix.GetUTF16();
+						m_TeamSuffix = suffix.GetUTF16();
+						m_TagVisbility = visbility.GetUTF16();
+						m_CollisionRule = collision.GetUTF16();
+					}
+					break;
+					case Mode::AddPlayer:
+					case Mode::RemovePlayer:
+					{
+						VarInt count;
 
-    return buffer;
-}
+						data >> count;
 
-PlayerPositionPacket::PlayerPositionPacket(Vector3d position, bool onGround)
-    : m_Position(position), m_OnGround(onGround)
-{
-    
-}
+						for (s32 i = 0; i < count.GetInt(); ++i){
+							MCString player;
+							data >> player;
 
-DataBuffer PlayerPositionPacket::Serialize() const {
-    DataBuffer buffer;
-    buffer << m_Id;
-    buffer << m_Position.x << m_Position.y << m_Position.z;
-    buffer << m_OnGround;
-    return buffer;
-}
+							m_Players.push_back(player.GetUTF16());
+						}
+					}
+					break;
+					}
 
-PlayerPositionAndLookPacket::PlayerPositionAndLookPacket(Vector3d position, float yaw, float pitch, bool onGround)
-    : m_Position(position), m_Yaw(yaw), m_Pitch(pitch), m_OnGround(onGround)
-{
-    
-}
+					return true;
+				}
 
-DataBuffer PlayerPositionAndLookPacket::Serialize() const {
-    DataBuffer buffer;
+				void TeamsPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    buffer << m_Id;
-    buffer << m_Position.x << m_Position.y << m_Position.z;
-    buffer << m_Yaw << m_Pitch;
-    buffer << m_OnGround;
+				UpdateScorePacket::UpdateScorePacket(){
 
-    return buffer;
-}
+				}
 
-PlayerLookPacket::PlayerLookPacket(float yaw, float pitch, bool onGround)
-    : m_Yaw(yaw), m_Pitch(pitch), m_OnGround(onGround)
-{
-    
-}
+				bool UpdateScorePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					MCString name, objective;
+					u8 action;
 
-DataBuffer PlayerLookPacket::Serialize() const {
-    DataBuffer buffer;
-    buffer << m_Id;
-    buffer << m_Yaw << m_Pitch;
-    buffer << m_OnGround;
-    return buffer;
-}
+					data >> name >> action >> objective;
 
+					m_ScoreName = name.GetUTF16();
+					m_Action = (Action)action;
+					m_Objective = objective.GetUTF16();
 
-PlayerPacket::PlayerPacket(bool onGround)
-    : m_OnGround(onGround)
-{
-    
-}
+					if (m_Action != Action::Remove){
+						VarInt value;
+						data >> value;
+						m_Value = value.GetInt();
+					}
+					return true;
+				}
 
-DataBuffer PlayerPacket::Serialize() const {
-    DataBuffer buffer;
-    buffer << m_Id;
-    buffer << m_OnGround;
-    return buffer;
-}
+				void UpdateScorePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-VehicleMovePacket::VehicleMovePacket(Vector3d position, float yaw, float pitch)
-    : m_Position(position), m_Yaw(yaw), m_Pitch(pitch)
-{
-    
-}
+				SpawnPositionPacket::SpawnPositionPacket(){
 
-DataBuffer VehicleMovePacket::Serialize() const {
-    DataBuffer buffer;
+				}
 
-    buffer << m_Id;
-    buffer << m_Position.x << m_Position.y << m_Position.z;
-    buffer << m_Yaw << m_Pitch;
+				bool SpawnPositionPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_Location;
+					return true;
+				}
 
-    return buffer;
-}
+				void SpawnPositionPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-SteerBoatPacket::SteerBoatPacket(bool rightPaddle, bool leftPaddle)
-    : m_RightPaddle(rightPaddle), m_LeftPaddle(leftPaddle)
-{
-    
-}
+				TimeUpdatePacket::TimeUpdatePacket(){
 
-DataBuffer SteerBoatPacket::Serialize() const {
-    DataBuffer buffer;
+				}
 
-    buffer << m_Id;
-    buffer << m_RightPaddle << m_LeftPaddle;
+				bool TimeUpdatePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_WorldAge;
+					data >> m_Time;
+					return true;
+				}
 
-    return buffer;
-}
+				void TimeUpdatePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-PlayerAbilitiesPacket::PlayerAbilitiesPacket(bool isFlying)
-    : m_IsFlying(isFlying)
-{
-    
-}
+				TitlePacket::TitlePacket(){
 
-DataBuffer PlayerAbilitiesPacket::Serialize() const {
-    DataBuffer buffer;
+				}
 
-    buffer << m_Id;
+				bool TitlePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt action;
 
-    u8 flags = (u8)m_IsFlying << 1;
-    float flyingSpeed = 0.0f;
-    float walkingSpeed = 0.0f;
+					data >> action;
 
-    buffer << flags << flyingSpeed << walkingSpeed;
+					m_Action = (Action)action.GetInt();
 
-    return buffer;
-}
+					switch (m_Action){
+					case Action::SetTitle:
+					case Action::SetSubtitle:
+					case Action::SetActionBar:
+					{
+						MCString text;
+						data >> text;
 
-PlayerDiggingPacket::PlayerDiggingPacket(Status status, Vector3i position, Face face)
-    : m_Status(status), m_Position(position), m_Face(face)
-{
-    
-}
+						m_Text = text.GetUTF16();
+					}
+					break;
+					case Action::SetDisplay:
+					{
+						data >> m_FadeIn >> m_Stay >> m_FadeOut;
+					}
+					break;
+					default:
+						break;
+					}
 
-DataBuffer PlayerDiggingPacket::Serialize() const {
-    DataBuffer buffer;
-    Position location((s32)m_Position.x, (s32)m_Position.y, (s32)m_Position.z);
+					return true;
+				}
 
-    buffer << m_Id;
-    buffer << (u8)m_Status;
-    buffer << location;
-    buffer << (u8)m_Face;
+				void TitlePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    return buffer;
-}
+				SoundEffectPacket::SoundEffectPacket(){
 
-EntityActionPacket::EntityActionPacket(EntityId eid, Action action, s32 actionData)
-    : m_EntityId(eid), m_Action(action), m_ActionData(actionData)
-{
-    
-}
+				}
 
-DataBuffer EntityActionPacket::Serialize() const {
-    DataBuffer buffer;
-    VarInt eid(m_EntityId);
-    VarInt action((s32)m_Action);
-    VarInt actionData(m_ActionData);
+				bool SoundEffectPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt id, category;
 
-    buffer << m_Id;
-    buffer << eid << action << actionData;
+					data >> id >> category;
 
-    return buffer;
-}
+					m_SoundId = id.GetInt();
+					m_Category = (SoundCategory)category.GetInt();
 
-SteerVehiclePacket::SteerVehiclePacket(float sideways, float forward, u8 flags)
-    : m_Sideways(sideways), m_Forward(forward), m_Flags(flags)
-{
-    
-}
+					FixedPointNumber<int> x, y, z;
+					data >> x >> y >> z;
 
-DataBuffer SteerVehiclePacket::Serialize() const {
-    DataBuffer buffer;
+					m_Position.x = (double)x.GetFloat();
+					m_Position.y = (double)y.GetFloat();
+					m_Position.z = (double)z.GetFloat();
+					data >> m_Volume;
+					data >> m_Pitch;
 
-    buffer << m_Id;
-    buffer << m_Sideways << m_Forward << m_Flags;
+					return true;
+				}
 
-    return buffer;
-}
+				void SoundEffectPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-ResourcePackStatusPacket::ResourcePackStatusPacket(Result result) 
-    : m_Result(result)
-{
-    
-}
+				PlayerListHeaderAndFooterPacket::PlayerListHeaderAndFooterPacket(){
 
-DataBuffer ResourcePackStatusPacket::Serialize() const {
-    DataBuffer buffer;
-    VarInt result((int)m_Result);
+				}
 
-    buffer << m_Id << result;
+				bool PlayerListHeaderAndFooterPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					MCString header, footer;
 
-    return buffer;
-}
+					data >> header >> footer;
 
-HeldItemChangePacket::HeldItemChangePacket(u16 slot)
-    : m_Slot(slot)
-{
-    
-}
+					m_Header = header.GetUTF16();
+					m_Footer = footer.GetUTF16();
 
-DataBuffer HeldItemChangePacket::Serialize() const {
-    DataBuffer buffer;
+					return true;
+				}
 
-    buffer << m_Id;
-    buffer << m_Slot;
+				void PlayerListHeaderAndFooterPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-    return buffer;
-}
+				CollectItemPacket::CollectItemPacket(){
 
-CreativeInventoryActionPacket::CreativeInventoryActionPacket(s16 slot, inventory::Slot item)
-    : m_Slot(slot),
-    m_Item(item)
-{
-    
-}
+				}
 
-DataBuffer CreativeInventoryActionPacket::Serialize() const {
-    DataBuffer buffer;
+				bool CollectItemPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt collected, collector, count;
 
-    buffer << m_Id;
-    buffer << m_Slot;
-    buffer << m_Item.Serialize(m_ProtocolVersion);
+					data >> collected >> collector >> count;
 
-    return buffer;
-}
+					m_Collected = collected.GetInt();
+					m_Collector = collector.GetInt();
+					m_PickupCount = count.GetInt();
 
-UpdateSignPacket::UpdateSignPacket(Vector3d position, const std::wstring& line1, const std::wstring& line2, 
-        const std::wstring& line3, const std::wstring& line4) 
-    : m_Line1(line1), m_Line2(line2), m_Line3(line3), m_Line4(line4)
-{
-    m_Position = Position((s32)position.x, (s32)position.y, (s32)position.z);
-}
+					return true;
+				}
 
-DataBuffer UpdateSignPacket::Serialize() const {
-    DataBuffer buffer;
-    MCString line1(m_Line1);
-    MCString line2(m_Line2);
-    MCString line3(m_Line3);
-    MCString line4(m_Line4);
-
-    buffer << m_Id;
-    buffer << m_Position;
-    buffer << line1 << line2;
-    buffer << line3 << line4;
-
-    return buffer;
-}
+				void CollectItemPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-AnimationPacket::AnimationPacket(Hand hand) 
-    : m_Hand(hand) 
-{
-    
-}
+				EntityTeleportPacket::EntityTeleportPacket(){
 
-DataBuffer AnimationPacket::Serialize() const {
-    DataBuffer buffer;
-    VarInt hand((int)m_Hand);
+				}
 
-    buffer << m_Id << hand;
+				bool EntityTeleportPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
 
-    return buffer;
-}
+					data >> eid;
 
-SpectatePacket::SpectatePacket(UUID uuid)
-    : m_UUID(uuid)
-{
-    
-}
+					m_EntityId = eid.GetInt();
 
-DataBuffer SpectatePacket::Serialize() const {
-    DataBuffer buffer;
-    
-    buffer << m_Id << m_UUID;
+					data >> m_Position.x >> m_Position.y >> m_Position.z;
 
-    return buffer;
-}
+					data >> m_Yaw >> m_Pitch;
+					data >> m_OnGround;
 
-PlayerBlockPlacementPacket::PlayerBlockPlacementPacket(Vector3i position, Face face, Hand hand, Vector3f cursorPos) 
-    : m_Position(position), m_Face(face), m_Hand(hand), m_CursorPos(cursorPos)
-{
-    
-}
+					return true;
+				}
 
-DataBuffer PlayerBlockPlacementPacket::Serialize() const {
-    DataBuffer buffer;
-    Position location((s32)m_Position.x, (s32)m_Position.y, (s32)m_Position.z);
-    VarInt face((u8)m_Face), hand((int)m_Hand);
-
-    buffer << m_Id;
-    buffer << location;
-    buffer << face;
-    buffer << hand;
-    buffer << m_CursorPos.x;
-    buffer << m_CursorPos.y;
-    buffer << m_CursorPos.z;
-
-    return buffer;
-}
+				void EntityTeleportPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
 
-UseItemPacket::UseItemPacket(Hand hand)
-    : m_Hand(hand)
-{
-    
-}
+				EntityPropertiesPacket::EntityPropertiesPacket(){
 
-DataBuffer UseItemPacket::Serialize() const {
-    DataBuffer buffer;
-    VarInt hand((int)m_Hand);
+				}
 
-    buffer << m_Id << hand;
+				bool EntityPropertiesPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid;
 
-    return buffer;
-}
+					data >> eid;
+					m_EntityId = eid.GetInt();
 
-namespace status {
+					s32 propertyCount;
+					data >> propertyCount;
 
-RequestPacket::RequestPacket() {
-    m_ProtocolState = protocol::State::Status;
-}
+					for (s32 i = 0; i < propertyCount; ++i){
+						MCString key;
+						double value;
 
-DataBuffer RequestPacket::Serialize() const {
-    DataBuffer buffer;
+						data >> key;
+						data >> value;
 
-    buffer << m_Id;
+						mc::entity::Attribute attribute(key.GetUTF16(), value);
 
-    return buffer;
-}
+						VarInt modifierCount;
+						data >> modifierCount;
 
-PingPacket::PingPacket(s64 payload) : m_Payload(payload) {
-    m_ProtocolState = protocol::State::Status;
-}
+						for (s32 j = 0; j < modifierCount.GetInt(); ++j){
+							UUID uuid;
+							double amount;
+							u8 operation;
 
-DataBuffer PingPacket::Serialize() const {
-    DataBuffer buffer;
+							data >> uuid;
+							data >> amount;
+							data >> operation;
 
-    buffer << m_Id << m_Payload;
+							mc::entity::Modifier modifier(uuid, amount, (mc::entity::ModifierOperation)operation);
 
-    return buffer;
-}
+							attribute.AddModifier(modifier);
+						}
+
+						m_Properties.insert(std::make_pair(attribute.GetKey(), attribute));
+					}
+					return true;
+				}
+
+				void EntityPropertiesPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
+
+				EntityEffectPacket::EntityEffectPacket(){
+
+				}
+
+				bool EntityEffectPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt eid, duration;
+					data >> eid >> m_EffectId >> m_Amplifier >> duration >> m_Flags;
+					m_EntityId = eid.GetInt();
+					m_Duration = duration.GetInt();
+					return true;
+				}
+
+				void EntityEffectPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
+
+				AdvancementProgressPacket::AdvancementProgressPacket(){
+
+				}
+
+				bool AdvancementProgressPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					bool hasId;
+					data >> hasId;
+
+					if (hasId){
+						MCString id;
+
+						data >> id;
+
+						m_Id = id.GetUTF16();
+					}
+
+					return true;
+				}
+
+				void AdvancementProgressPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
+
+				CraftRecipeResponsePacket::CraftRecipeResponsePacket(){
+
+				}
+
+				bool CraftRecipeResponsePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt recipeId;
+
+					data >> m_WindowId >> recipeId;
+
+					m_RecipeId = recipeId.GetInt();
+
+					return true;
+				}
+
+				void CraftRecipeResponsePacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
+
+
+				// Login packets
+				DisconnectPacket::DisconnectPacket(){
+					m_ProtocolState = protocol::State::Login;
+				}
+
+				bool DisconnectPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					// Update the protocol state so the login and play versions of this are handled correctly.
+					if (m_Connection)
+						m_ProtocolState = m_Connection->GetProtocolState();
+
+					data >> m_Reason;
+					return true;
+				}
+
+				void DisconnectPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
+
+				EncryptionRequestPacket::EncryptionRequestPacket(){
+					m_ProtocolState = protocol::State::Login;
+				}
+
+				bool EncryptionRequestPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt pubKeyLen;
+					VarInt verifyTokenLen;
+
+					data >> m_ServerId;
+
+					data >> pubKeyLen;
+					data.ReadSome(m_PublicKey, pubKeyLen.GetInt());
+
+					data >> verifyTokenLen;
+					data.ReadSome(m_VerifyToken, verifyTokenLen.GetInt());
+
+					return true;
+				}
+
+				void EncryptionRequestPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
+
+				LoginSuccessPacket::LoginSuccessPacket(){
+					m_ProtocolState = protocol::State::Login;
+				}
+
+				bool LoginSuccessPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					if (m_ProtocolVersion >= mc::protocol::Version::Minecraft_1_16_5){
+						mc::UUID uuid;
+						data >> uuid;
+						m_UUID = uuid.ToString();
+					}
+					else{
+						data >> m_UUID;
+					}
+					data >> m_Username;
+					return true;
+				}
+
+				void LoginSuccessPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
+
+				SetCompressionPacket::SetCompressionPacket(){
+					m_ProtocolState = protocol::State::Login;
+				}
+
+				bool SetCompressionPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					data >> m_MaxPacketSize;
+					return true;
+				}
+
+				void SetCompressionPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
+
+				namespace status{
+
+					ResponsePacket::ResponsePacket(){
+						m_ProtocolState = protocol::State::Status;
+					}
+
+					bool ResponsePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+						MCString response;
+
+						data >> response;
+
+						m_Response = response.GetUTF16();
+
+						return true;
+					}
+
+					void ResponsePacket::Dispatch(PacketHandler* handler){
+						handler->HandlePacket(this);
+					}
+
+					PongPacket::PongPacket(){
+						m_ProtocolState = protocol::State::Status;
+					}
+
+					bool PongPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+						data >> m_Payload;
+
+						return true;
+					}
+
+					void PongPacket::Dispatch(PacketHandler* handler){
+						handler->HandlePacket(this);
+					}
+
+				} // ns status
+
+			} // ns in
+
+			namespace out{
+
+				// Handshake packets
+				HandshakePacket::HandshakePacket(s32 protocol, std::string server, u16 port, protocol::State state)
+					: m_ProtocolVersion(protocol), m_Server(server), m_Port(port), m_NewState((s32)state){
+
+				}
+
+				DataBuffer HandshakePacket::Serialize() const{
+					DataBuffer buffer;
+
+					buffer << m_Id << m_ProtocolVersion << m_Server << m_Port << m_NewState;
+
+					return buffer;
+				}
+
+				// Login packets
+
+				LoginStartPacket::LoginStartPacket(const std::string& name)
+					: m_Name(name){
+
+				}
+
+				DataBuffer LoginStartPacket::Serialize() const{
+					DataBuffer buffer;
+					buffer << m_Id;
+					buffer << m_Name;
+					return buffer;
+				}
+
+				EncryptionResponsePacket::EncryptionResponsePacket(const std::string& sharedSecret, const std::string& verifyToken)
+					: m_SharedSecret(sharedSecret), m_VerifyToken(verifyToken){
+
+				}
+
+				DataBuffer EncryptionResponsePacket::Serialize() const{
+					DataBuffer buffer;
+
+					buffer << m_Id;
+
+					VarInt sharedLength = (s32)m_SharedSecret.length();
+					VarInt verifyLength = (s32)m_VerifyToken.length();
+					buffer << sharedLength;
+					buffer << m_SharedSecret;
+					buffer << verifyLength;
+					buffer << m_VerifyToken;
+					return buffer;
+				}
+
+				LoginPluginResponsePacket::LoginPluginResponsePacket(u32 messageId, bool successful, const std::string& data)
+					: m_MessageId(messageId), m_Successful(successful), m_Data(data){
+
+				}
+
+				DataBuffer LoginPluginResponsePacket::Serialize() const{
+					DataBuffer buffer;
+
+					buffer << m_Id;
+
+					VarInt messageId((s32)m_MessageId);
+
+					buffer << messageId << m_Successful;
+					buffer << m_Data;
+
+					return buffer;
+				}
+
+				// Play packets
+
+				TeleportConfirmPacket::TeleportConfirmPacket(s32 teleportId): m_TeleportId(teleportId){
+
+				}
+
+				DataBuffer TeleportConfirmPacket::Serialize() const{
+					DataBuffer buffer;
+					VarInt teleportId(m_TeleportId);
+
+					buffer << m_Id;
+					buffer << teleportId;
+
+					return buffer;
+				}
+
+				PrepareCraftingGridPacket::PrepareCraftingGridPacket(u8 windowId, s16 actionNumber,
+					const std::vector<Entry>& returnEntries, const std::vector<Entry>& prepareEntries)
+					: m_WindowId(windowId),
+					m_ActionNumber(actionNumber),
+					m_ReturnEntries(returnEntries),
+					m_PrepareEntries(prepareEntries){
+
+				}
+
+				DataBuffer PrepareCraftingGridPacket::Serialize() const{
+					DataBuffer buffer;
+
+					buffer << m_Id;
+					buffer << m_WindowId;
+					buffer << m_ActionNumber;
+
+					s16 returnSize = static_cast<s16>(m_ReturnEntries.size());
+
+					buffer << returnSize;
+					for (auto&& entry : m_ReturnEntries){
+						buffer << entry.item.Serialize(m_ProtocolVersion);
+						buffer << entry.craftingSlot;
+						buffer << entry.playerSlot;
+					}
+
+					s16 prepareSize = static_cast<s16>(m_PrepareEntries.size());
+
+					buffer << prepareSize;
+					for (auto&& entry : m_PrepareEntries){
+						buffer << entry.item.Serialize(m_ProtocolVersion);
+						buffer << entry.craftingSlot;
+						buffer << entry.playerSlot;
+					}
+
+					return buffer;
+				}
+
+				CraftRecipeRequestPacket::CraftRecipeRequestPacket(u8 windowId, s32 recipeId, bool makeAll)
+					: m_WindowId(windowId),
+					m_RecipeId(recipeId),
+					m_MakeAll(makeAll){
+
+				}
+
+				DataBuffer CraftRecipeRequestPacket::Serialize() const{
+					VarInt recipeId(m_RecipeId);
+					DataBuffer buffer;
+
+					buffer << m_Id;
+					buffer << m_WindowId;
+					buffer << recipeId;
+					buffer << m_MakeAll;
+
+					return buffer;
+				}
+
+				TabCompletePacket::TabCompletePacket(const std::wstring& text, bool assumeCommand)
+					: m_Text(text), m_AssumeCommand(assumeCommand), m_HasPosition(false){
+
+				}
+
+				TabCompletePacket::TabCompletePacket(const std::wstring& text, bool assumeCommand, bool hasPosition, Position lookingAt)
+					: m_Text(text), m_AssumeCommand(assumeCommand), m_HasPosition(hasPosition), m_LookingAt(lookingAt){
+
+				}
+
+				DataBuffer TabCompletePacket::Serialize() const{
+					DataBuffer buffer;
+					MCString text(m_Text);
+
+					buffer << m_Id << text;
+
+					if (m_ProtocolVersion <= protocol::Version::Minecraft_1_12_2){
+						buffer << m_AssumeCommand << m_HasPosition;
+
+						if (m_HasPosition)
+							buffer << m_LookingAt;
+					}
+
+					return buffer;
+				}
+
+				ChatPacket::ChatPacket(const std::wstring& message): m_Message(message){
+
+				}
+
+				ChatPacket::ChatPacket(const std::string& message) : m_Message(message.begin(), message.end()){
+
+				}
+
+				DataBuffer ChatPacket::Serialize() const{
+					MCString out(m_Message);
+					DataBuffer buffer;
+
+					buffer << m_Id;
+					buffer << out;
+
+					return buffer;
+				}
+
+				ClientStatusPacket::ClientStatusPacket(Action action): m_Action(action){
+
+				}
+
+				DataBuffer ClientStatusPacket::Serialize() const{
+					VarInt action(m_Action);
+					DataBuffer buffer;
+
+					buffer << m_Id;
+					buffer << action;
+
+					return buffer;
+				}
+
+				ClientSettingsPacket::ClientSettingsPacket(const std::wstring& locale, u8 viewDistance, ChatMode chatMode, bool chatColors, u8 skinFlags, MainHand hand)
+					: m_Locale(locale), m_ViewDistance(viewDistance), m_ChatMode(chatMode),
+					m_ChatColors(chatColors), m_SkinFlags(skinFlags), m_MainHand(hand){
+
+				}
+
+				DataBuffer ClientSettingsPacket::Serialize() const{
+					MCString locale(m_Locale);
+					DataBuffer buffer;
+					VarInt chatMode((int)m_ChatMode);
+					VarInt hand((int)m_MainHand);
+
+					buffer << m_Id;
+					buffer << locale;
+					buffer << m_ViewDistance;
+					buffer << chatMode;
+					buffer << m_ChatColors;
+					buffer << m_SkinFlags;
+					buffer << hand;
+
+					return buffer;
+				}
+
+
+				ConfirmTransactionPacket::ConfirmTransactionPacket(u8 windowId, s16 action, bool accepted)
+					: m_WindowId(windowId), m_Action(action), m_Accepted(accepted){
+
+				}
+
+				DataBuffer ConfirmTransactionPacket::Serialize() const{
+					DataBuffer buffer;
+
+					buffer << m_Id;
+					buffer << m_WindowId;
+					buffer << m_Action;
+					buffer << m_Accepted;
+
+					return buffer;
+				}
+
+				EnchantItemPacket::EnchantItemPacket(u8 windowId, u8 enchantmentIndex){
+
+				}
+
+				DataBuffer EnchantItemPacket::Serialize() const{
+					DataBuffer buffer;
+
+					buffer << m_Id << m_WindowId << m_EnchantmentIndex;
+
+					return buffer;
+				}
+
+				ClickWindowPacket::ClickWindowPacket(u8 windowId, u16 slotIndex, u8 button, u16 action, s32 mode, inventory::Slot clickedItem)
+					: m_WindowId(windowId), m_SlotIndex(slotIndex), m_Button(button), m_Action(action), m_Mode(mode), m_ClickedItem(clickedItem){
+
+				}
+
+				DataBuffer ClickWindowPacket::Serialize() const{
+					DataBuffer buffer;
+
+					buffer << m_Id;
+					buffer << m_WindowId << m_SlotIndex << m_Button << m_Action;
+					VarInt mode(m_Mode);
+					buffer << mode << m_ClickedItem.Serialize(m_ProtocolVersion);
+
+					return buffer;
+				}
+
+				CloseWindowPacket::CloseWindowPacket(u8 windowId)
+					: m_WindowId(windowId){
+
+				}
+
+				DataBuffer CloseWindowPacket::Serialize() const{
+					DataBuffer buffer;
+
+					buffer << m_Id;
+					buffer << m_WindowId;
+
+					return buffer;
+				}
+
+				PluginMessagePacket::PluginMessagePacket(const std::wstring& channel, const std::string& data)
+					: m_Channel(channel), m_Data(data){
+
+				}
+
+				DataBuffer PluginMessagePacket::Serialize() const{
+					DataBuffer buffer;
+					MCString channel(m_Channel);
+
+					buffer << m_Id << channel;
+					buffer << m_Data;
+
+					return buffer;
+				}
+
+				UseEntityPacket::UseEntityPacket(EntityId target, Action action, Hand hand, Vector3f position, bool sneaking)
+					: m_Target(target), m_Action(action), m_Hand(hand), m_Position(position), m_Sneaking(sneaking){
+
+				}
+
+				DataBuffer UseEntityPacket::Serialize() const{
+					DataBuffer buffer;
+					VarInt target(m_Target);
+					VarInt type((int)m_Action);
+
+					buffer << m_Id;
+					buffer << target;
+					buffer << type;
+
+					if (m_Action == Action::InteractAt){
+						buffer << m_Position.x;
+						buffer << m_Position.y;
+						buffer << m_Position.z;
+					}
+
+					if (m_Action == Action::Interact || m_Action == Action::InteractAt){
+						VarInt hand((int)m_Hand);
+						buffer << hand;
+					}
+
+					if (GetProtocolVersion() >= Version::Minecraft_1_16_5){
+						buffer << m_Sneaking;
+					}
+
+					return buffer;
+				}
+
+				KeepAlivePacket::KeepAlivePacket(s64 id): m_KeepAliveId(id){
+
+				}
+
+				DataBuffer KeepAlivePacket::Serialize() const{
+					DataBuffer buffer;
+
+					buffer << m_Id;
+
+					if (m_ProtocolVersion < Version::Minecraft_1_12_2){
+						VarInt aliveId(m_KeepAliveId);
+
+						buffer << aliveId;
+					}
+					else{
+						buffer << m_KeepAliveId;
+					}
+
+					return buffer;
+				}
+
+				PlayerPositionPacket::PlayerPositionPacket(Vector3d position, bool onGround)
+					: m_Position(position), m_OnGround(onGround){
+
+				}
+
+				DataBuffer PlayerPositionPacket::Serialize() const{
+					DataBuffer buffer;
+					buffer << m_Id;
+					buffer << m_Position.x << m_Position.y << m_Position.z;
+					buffer << m_OnGround;
+					return buffer;
+				}
+
+				PlayerPositionAndLookPacket::PlayerPositionAndLookPacket(Vector3d position, float yaw, float pitch, bool onGround)
+					: m_Position(position), m_Yaw(yaw), m_Pitch(pitch), m_OnGround(onGround){
+
+				}
+
+				DataBuffer PlayerPositionAndLookPacket::Serialize() const{
+					DataBuffer buffer;
+
+					buffer << m_Id;
+					buffer << m_Position.x << m_Position.y << m_Position.z;
+					buffer << m_Yaw << m_Pitch;
+					buffer << m_OnGround;
+
+					return buffer;
+				}
+
+				PlayerLookPacket::PlayerLookPacket(float yaw, float pitch, bool onGround)
+					: m_Yaw(yaw), m_Pitch(pitch), m_OnGround(onGround){
+
+				}
+
+				DataBuffer PlayerLookPacket::Serialize() const{
+					DataBuffer buffer;
+					buffer << m_Id;
+					buffer << m_Yaw << m_Pitch;
+					buffer << m_OnGround;
+					return buffer;
+				}
+
+
+				PlayerPacket::PlayerPacket(bool onGround)
+					: m_OnGround(onGround){
+
+				}
+
+				DataBuffer PlayerPacket::Serialize() const{
+					DataBuffer buffer;
+					buffer << m_Id;
+					buffer << m_OnGround;
+					return buffer;
+				}
+
+				VehicleMovePacket::VehicleMovePacket(Vector3d position, float yaw, float pitch)
+					: m_Position(position), m_Yaw(yaw), m_Pitch(pitch){
+
+				}
+
+				DataBuffer VehicleMovePacket::Serialize() const{
+					DataBuffer buffer;
+
+					buffer << m_Id;
+					buffer << m_Position.x << m_Position.y << m_Position.z;
+					buffer << m_Yaw << m_Pitch;
+
+					return buffer;
+				}
+
+				SteerBoatPacket::SteerBoatPacket(bool rightPaddle, bool leftPaddle)
+					: m_RightPaddle(rightPaddle), m_LeftPaddle(leftPaddle){
+
+				}
+
+				DataBuffer SteerBoatPacket::Serialize() const{
+					DataBuffer buffer;
+
+					buffer << m_Id;
+					buffer << m_RightPaddle << m_LeftPaddle;
+
+					return buffer;
+				}
+
+				PlayerAbilitiesPacket::PlayerAbilitiesPacket(bool isFlying)
+					: m_IsFlying(isFlying){
+
+				}
+
+				DataBuffer PlayerAbilitiesPacket::Serialize() const{
+					DataBuffer buffer;
+
+					buffer << m_Id;
+
+					u8 flags = (u8)m_IsFlying << 1;
+					float flyingSpeed = 0.0f;
+					float walkingSpeed = 0.0f;
+
+					buffer << flags << flyingSpeed << walkingSpeed;
+
+					return buffer;
+				}
+
+				PlayerDiggingPacket::PlayerDiggingPacket(Status status, Vector3i position, Face face)
+					: m_Status(status), m_Position(position), m_Face(face){
+
+				}
+
+				DataBuffer PlayerDiggingPacket::Serialize() const{
+					DataBuffer buffer;
+					Position location((s32)m_Position.x, (s32)m_Position.y, (s32)m_Position.z);
+
+					buffer << m_Id;
+					buffer << (u8)m_Status;
+					buffer << location;
+					buffer << (u8)m_Face;
+
+					return buffer;
+				}
+
+				EntityActionPacket::EntityActionPacket(EntityId eid, Action action, s32 actionData)
+					: m_EntityId(eid), m_Action(action), m_ActionData(actionData){
+
+				}
+
+				DataBuffer EntityActionPacket::Serialize() const{
+					DataBuffer buffer;
+					VarInt eid(m_EntityId);
+					VarInt action((s32)m_Action);
+					VarInt actionData(m_ActionData);
+
+					buffer << m_Id;
+					buffer << eid << action;
+					buffer << actionData;
+
+					return buffer;
+				}
+
+				SteerVehiclePacket::SteerVehiclePacket(float sideways, float forward, u8 flags)
+					: m_Sideways(sideways), m_Forward(forward), m_Flags(flags){
+
+				}
+
+				DataBuffer SteerVehiclePacket::Serialize() const{
+					DataBuffer buffer;
+
+					buffer << m_Id;
+					buffer << m_Sideways << m_Forward << m_Flags;
+
+					return buffer;
+				}
+
+				ResourcePackStatusPacket::ResourcePackStatusPacket(Result result)
+					: m_Result(result){
+
+				}
+
+				DataBuffer ResourcePackStatusPacket::Serialize() const{
+					DataBuffer buffer;
+					VarInt result((int)m_Result);
+
+					buffer << m_Id << result;
+
+					return buffer;
+				}
+
+				HeldItemChangePacket::HeldItemChangePacket(u16 slot)
+					: m_Slot(slot){
+
+				}
+
+				DataBuffer HeldItemChangePacket::Serialize() const{
+					DataBuffer buffer;
+
+					buffer << m_Id;
+					buffer << m_Slot;
+
+					return buffer;
+				}
+
+				CreativeInventoryActionPacket::CreativeInventoryActionPacket(s16 slot, inventory::Slot item)
+					: m_Slot(slot),
+					m_Item(item){
+
+				}
+
+				DataBuffer CreativeInventoryActionPacket::Serialize() const{
+					DataBuffer buffer;
+
+					buffer << m_Id;
+					buffer << m_Slot;
+					buffer << m_Item.Serialize(m_ProtocolVersion);
+
+					return buffer;
+				}
+
+				UpdateSignPacket::UpdateSignPacket(Vector3d position, const std::wstring& line1, const std::wstring& line2,
+					const std::wstring& line3, const std::wstring& line4)
+					: m_Line1(line1), m_Line2(line2), m_Line3(line3), m_Line4(line4){
+					m_Position = Position((s32)position.x, (s32)position.y, (s32)position.z);
+				}
+
+				DataBuffer UpdateSignPacket::Serialize() const{
+					DataBuffer buffer;
+					MCString line1(m_Line1);
+					MCString line2(m_Line2);
+					MCString line3(m_Line3);
+					MCString line4(m_Line4);
+
+					buffer << m_Id;
+					buffer << m_Position;
+					buffer << line1 << line2;
+					buffer << line3 << line4;
+
+					return buffer;
+				}
+
+				AnimationPacket::AnimationPacket(Hand hand)
+					: m_Hand(hand){
+
+				}
+
+				DataBuffer AnimationPacket::Serialize() const{
+					DataBuffer buffer;
+					VarInt hand((int)m_Hand);
+
+					buffer << m_Id << hand;
+
+					return buffer;
+				}
+
+				SpectatePacket::SpectatePacket(UUID uuid)
+					: m_UUID(uuid){
+
+				}
+
+				DataBuffer SpectatePacket::Serialize() const{
+					DataBuffer buffer;
+
+					buffer << m_Id << m_UUID;
+
+					return buffer;
+				}
+
+				PlayerBlockPlacementPacket::PlayerBlockPlacementPacket(Vector3i position, Face face, Hand hand, Vector3f cursorPos)
+					: m_Position(position), m_Face(face), m_Hand(hand), m_CursorPos(cursorPos){
+
+				}
+
+				DataBuffer PlayerBlockPlacementPacket::Serialize() const{
+					DataBuffer buffer;
+					Position location((s32)m_Position.x, (s32)m_Position.y, (s32)m_Position.z);
+					VarInt face((u8)m_Face), hand((int)m_Hand);
+
+					buffer << m_Id;
+					buffer << location;
+					buffer << face;
+					buffer << hand;
+					buffer << m_CursorPos.x;
+					buffer << m_CursorPos.y;
+					buffer << m_CursorPos.z;
+					if(GetProtocolVersion() >= Version::Minecraft_1_16_5){
+						//to tell if we are in a block, false in most cases
+						buffer << false;
+					}
+
+					return buffer;
+				}
+
+				UseItemPacket::UseItemPacket(Hand hand)
+					: m_Hand(hand){
+
+				}
+
+				DataBuffer UseItemPacket::Serialize() const{
+					DataBuffer buffer;
+					VarInt hand((int)m_Hand);
+
+					buffer << m_Id << hand;
+
+					return buffer;
+				}
+
+				namespace status{
+
+					RequestPacket::RequestPacket(){
+						m_ProtocolState = protocol::State::Status;
+					}
+
+					DataBuffer RequestPacket::Serialize() const{
+						DataBuffer buffer;
+
+						buffer << m_Id;
+
+						return buffer;
+					}
+
+					PingPacket::PingPacket(s64 payload): m_Payload(payload){
+						m_ProtocolState = protocol::State::Status;
+					}
+
+					DataBuffer PingPacket::Serialize() const{
+						DataBuffer buffer;
+
+						buffer << m_Id << m_Payload;
+
+						return buffer;
+					}
 
-} // ns status
+				} // ns status
 
-} // ns out
-} // ns packets
-} // ns protocol
+			} // ns out
+		} // ns packets
+	} // ns protocol
 } // ns mc

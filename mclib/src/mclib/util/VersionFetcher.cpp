@@ -31,6 +31,8 @@ void VersionFetcher::OnPingResponse(const json& node) {
         { 404, mc::protocol::Version::Minecraft_1_13_2 },
 
         { 578, mc::protocol::Version::Minecraft_1_15_2 },
+
+		{ 754, mc::protocol::Version::Minecraft_1_16_5 },
     };
 
     auto&& versionNode = node.value("version", json());

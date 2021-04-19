@@ -25,6 +25,9 @@ enum class Version {
     Minecraft_1_13_2 = 404,
 
     Minecraft_1_15_2 = 578,
+
+	Minecraft_1_16_4 = 754,
+	Minecraft_1_16_5 = 754,
 };
 
 MCLIB_API std::string to_string(Version version);

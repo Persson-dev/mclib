@@ -27,8 +27,8 @@ DataBuffer& operator>>(DataBuffer& in, Position& pos) {
     in >> val;
 
     pos.m_X = val >> 38;
-    pos.m_Y = (val >> 26) & 0xFFF;
-    pos.m_Z = val << 38 >> 38;
+    pos.m_Y = val & 0xFFF;
+    pos.m_Z = (val << 26 >> 38);
 
     if (pos.m_X >= std::pow(2, 25)) pos.m_X -= (s64)std::pow(2, 26);
     if (pos.m_Y >= std::pow(2, 11)) pos.m_Y -= (s64)std::pow(2, 12);

@@ -69,6 +69,7 @@ public:
     ClientSettings& GetSettings() noexcept { return m_ClientSettings; }
     s32 GetDimension() const noexcept { return m_Dimension; }
     protocol::State GetProtocolState() const { return m_ProtocolState; }
+	bool getSentSettings() const {return m_SentSettings;}
 
     void SendSettings() noexcept { m_SentSettings = false; }
 

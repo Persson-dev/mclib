@@ -511,6 +511,8 @@ public:
 private:
     json m_ChatData;
     ChatPosition m_Position;
+	//used to filter chat
+	UUID m_Sender;
 
 public:
     MCLIB_API ChatPacket();
@@ -519,6 +521,7 @@ public:
 
     ChatPosition GetChatPosition() const { return m_Position; }
     const nlohmann::json& GetChatData() const { return m_ChatData; }
+	const UUID& getSender(){ return m_Sender; }
 };
 
 class MultiBlockChangePacket : public InboundPacket { // 0x10
@@ -1131,7 +1134,14 @@ public:
 private:
     Action m_Action;
     bool m_OpenCraftingBook;
-    bool m_Filter;
+    bool m_CraftingFilter;
+	//1.16
+	bool m_OpenSmeltingBook;
+	bool m_SmeltingFilter;
+	bool m_OpenBlastFurnaceBook;
+	bool m_BlastFurnaceFilter;
+	bool m_OpenSmokerBook;
+	bool m_SmokerFilter;
 
     std::vector<s32> m_Array1;
     std::vector<s32> m_Array2;
@@ -1904,9 +1914,10 @@ private:
     Action m_Action;
     Vector3f m_Position;
     Hand m_Hand;
+	bool m_Sneaking;
 
 public:
-    MCLIB_API UseEntityPacket(EntityId target, Action action, Hand hand = Hand::Main, Vector3f position = Vector3f(0, 0, 0));
+    MCLIB_API UseEntityPacket(EntityId target, Action action, Hand hand = Hand::Main, Vector3f position = Vector3f(0, 0, 0), bool sneaking = false);
     DataBuffer MCLIB_API Serialize() const;
 };
 
