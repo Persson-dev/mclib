@@ -1762,10 +1762,14 @@ namespace mc{
 
 					data >> m_Gamemode;
 
-					MCString level;
-					data >> level;
-
-					m_Level = level.GetUTF16();
+					if(GetProtocolVersion() < Version::Minecraft_1_15_2){
+						MCString level;
+						data >> level;
+						m_Level = level.GetUTF16();
+					}else{
+						bool isDebug, isFlat, copyMetatadata;
+						data >> isDebug >> isFlat >> copyMetatadata;
+					}
 
 					return true;
 				}
