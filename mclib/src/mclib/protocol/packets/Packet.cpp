@@ -1299,6 +1299,55 @@ namespace mc{
 					handler->HandlePacket(this);
 				}
 
+				TradeListPacket::TradeListPacket(){
+
+				}
+
+				bool TradeListPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt windowID;
+					data >> windowID;
+					m_WindowID = windowID.GetInt();
+
+					u8 tradesNumber;
+					data >> tradesNumber;
+
+					for(int i = 0; i < tradesNumber; i++){
+						Trade trade;
+						data >> trade.m_InputItem1;
+						data >> trade.m_OutputItem;
+						data >> trade.m_HasSecondItem;
+						if(trade.m_HasSecondItem)
+							data >> trade.m_InputItem2;
+						data >> trade.m_TradeDisabled;
+						data >> trade.m_NumberOfTradeUses;
+						data >> trade.m_MaximumNumberOfTradeUses;
+						data >> trade.m_XP;
+						data >> trade.m_SpecialPrice;
+						data >> trade.m_PriceMultiplier;
+						data >> trade.m_Demand;
+						m_Trades.push_back(trade);
+					}
+
+					VarInt villagerLevel;
+					data >> villagerLevel;
+
+					m_VillagerLevel = VillagerLevel(villagerLevel.GetInt());
+
+					VarInt experience;
+					data >> experience;
+
+					m_Experience = experience.GetInt();
+
+					data >> m_IsRegularVillager;
+					data >> m_CanRestock;
+
+					return true;
+				}
+
+				void TradeListPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
+
 
 				EntityRelativeMovePacket::EntityRelativeMovePacket(){
 
@@ -1569,6 +1618,41 @@ namespace mc{
 				}
 
 				void PlayerListItemPacket::Dispatch(PacketHandler* handler){
+					handler->HandlePacket(this);
+				}
+
+				FacePlayerPacket::FacePlayerPacket(){
+
+				}
+
+				bool FacePlayerPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
+					VarInt feetEyes;
+					data >> feetEyes;
+
+					m_Eyes = feetEyes.GetInt();
+
+					data >> m_Target.x >> m_Target.y >> m_Target.z;
+
+					data >> m_IsEntity;
+
+					if(m_IsEntity){
+
+						VarInt entityID;
+						data >> entityID;
+
+						m_EntityID = entityID.GetInt();
+
+						VarInt entityFeetEyes;
+						data >> entityFeetEyes;	
+
+						m_EntityEyes = entityFeetEyes.GetInt();
+
+					}
+
+					return true;
+				}
+
+				void FacePlayerPacket::Dispatch(PacketHandler* handler){
 					handler->HandlePacket(this);
 				}
 

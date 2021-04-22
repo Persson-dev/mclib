@@ -928,6 +928,42 @@ public:
     float IsOnGround() const { return m_OnGround; }
 };
 
+class TradeListPacket : public InboundPacket {
+public:
+	struct Trade {
+		inventory::Slot m_InputItem1;
+		inventory::Slot m_OutputItem;
+		bool m_HasSecondItem;
+		inventory::Slot m_InputItem2;
+		bool m_TradeDisabled;
+		s32 m_NumberOfTradeUses;
+		s32 m_MaximumNumberOfTradeUses;
+		s32 m_XP;
+		s32 m_SpecialPrice;
+		float m_PriceMultiplier;
+		s32 m_Demand;
+	};
+	enum VillagerLevel{Novice = 1, Apprentice, Journeyman, Expert, Master};
+private:
+	s32 m_WindowID;
+	std::vector<Trade> m_Trades;
+	VillagerLevel m_VillagerLevel;
+	s32 m_Experience;
+	bool m_IsRegularVillager;
+	bool m_CanRestock;
+public:
+	MCLIB_API TradeListPacket();
+    bool MCLIB_API Deserialize(DataBuffer& data, std::size_t packetLength);
+    void MCLIB_API Dispatch(PacketHandler* handler);
+
+	s32 getWindowID() const { return m_WindowID;}
+	const std::vector<Trade> getTrades() const {return m_Trades;}
+	VillagerLevel getVillagerLevel() const {return m_VillagerLevel;}
+	s32 getVillagerExperience() const {return m_Experience;}
+	bool isRegularVillager() const {return m_IsRegularVillager;}
+	bool canRestock() const {return m_CanRestock;}
+};
+
 class EntityLookAndRelativeMovePacket : public InboundPacket { // 0x26
 private:
     EntityId m_EntityId;
@@ -1076,6 +1112,28 @@ public:
     Action GetAction() const { return m_Action; }
 
     const std::vector<ActionDataPtr>& GetActionData() const { return m_Data; }
+};
+
+class FacePlayerPacket : public InboundPacket {
+private:
+	//true if eyes, false if feet
+	bool m_Eyes;
+	Vector3d m_Target;
+	bool m_IsEntity;
+	EntityId m_EntityID;
+	//true if entity eyes, false if entity feet
+	bool m_EntityEyes;
+
+public:
+	MCLIB_API FacePlayerPacket();
+    bool MCLIB_API Deserialize(DataBuffer& data, std::size_t packetLength);
+    void MCLIB_API Dispatch(PacketHandler* handler);
+
+	bool isEyesOrigin() const {return m_Eyes;}
+	Vector3d getTarget() const {return m_Target;}
+	bool isTargetEntity() const {return m_IsEntity;}
+	EntityId getTargetEntityId() const {return m_EntityID;}
+	bool isEntityEyesOrigin() const {return m_EntityEyes;}
 };
 
 class PlayerPositionAndLookPacket : public InboundPacket { // 0x2E
@@ -2015,7 +2073,7 @@ private:
     Face m_Face;
 
 public:
-    MCLIB_API PlayerDiggingPacket(Status status, Vector3i position, Face face);
+    MCLIB_API PlayerDiggingPacket(Status status, Vector3i position = Vector3i(0, 0, 0), Face face = Face::Bottom);
     DataBuffer MCLIB_API Serialize() const;
 };
 

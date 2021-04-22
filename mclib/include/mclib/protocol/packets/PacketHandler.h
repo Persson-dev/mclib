@@ -75,6 +75,7 @@ public:
     virtual void HandlePacket(in::ParticlePacket* packet) { } // 0x22
     virtual void HandlePacket(in::JoinGamePacket* packet) { } // 0x23
     virtual void HandlePacket(in::MapPacket* packet) { } // 0x24
+	virtual void HandlePacket(in::TradeListPacket* packet) { } // 0x26
     virtual void HandlePacket(in::EntityRelativeMovePacket* packet) { } // 0x25
     virtual void HandlePacket(in::EntityLookAndRelativeMovePacket* packet) { } // 0x26
     virtual void HandlePacket(in::EntityLookPacket* packet) { } // 0x27
@@ -84,6 +85,7 @@ public:
     virtual void HandlePacket(in::PlayerAbilitiesPacket* packet) { } // 0x2B
     virtual void HandlePacket(in::CombatEventPacket* packet) { } // 0x2C
     virtual void HandlePacket(in::PlayerListItemPacket* packet) { } // 0x2D
+	virtual void HandlePacket(in::FacePlayerPacket* packet) { }
     virtual void HandlePacket(in::PlayerPositionAndLookPacket* packet) { } // 0x2E
     virtual void HandlePacket(in::UseBedPacket* packet) { } // 0x2F
     virtual void HandlePacket(in::DestroyEntitiesPacket* packet) { } // 0x30
