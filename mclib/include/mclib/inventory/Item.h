@@ -23,7 +23,9 @@ namespace mc{
 			}
 			Item(const std::string& name, u32 data) : m_Name(name), m_Data(data), m_Block(nullptr){}
 			//TODO mapping item to its corresponding block 
-			void setBlock(block::BlockPtr block);
+			void setBlock(block::BlockPtr block){
+				m_Block = block;
+			}
 		private:
 			std::string m_Name;
 			u32 m_Data;

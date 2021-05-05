@@ -122,6 +122,10 @@ public:
         m_BlockNames[block->GetName()] = block;
     }
 
+	const std::unordered_map<u32, BlockPtr>& getBlocks(){
+		return m_Blocks;
+	}
+
     void MCLIB_API RegisterVanillaBlocks(protocol::Version protocolVersion);
     void MCLIB_API ClearRegistry();
 };

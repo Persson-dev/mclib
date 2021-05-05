@@ -1,4 +1,5 @@
 #include <mclib/inventory/Item.h>
+#include <mclib/block/Block.h>
 
 namespace mc{
 	namespace inventory{
@@ -13,7 +14,10 @@ namespace mc{
 		}
 
 		void MCLIB_API ItemRegistry::RegisterVanillaItems(protocol::Version protocolVersion){
-			//TODO : ItemRegistry for older versions
+			auto blockRegistry = block::BlockRegistry::GetInstance();
+			if(blockRegistry == nullptr){
+				throw std::runtime_error("BlockRegistry must be initialized before ItemRegistry !");
+			}
 			if (protocolVersion == protocol::Version::Minecraft_1_16_5){
 				const char* itemNames[] = {
 					"minecraft:air",
@@ -1889,7 +1893,7 @@ namespace mc{
 				for (int id = 0; id < sizeof(itemNames) / sizeof(*itemNames); ++id){
 					RegisterItem(new Item(itemNames[id], id));
 				}
-				
+
 			}else if (protocolVersion == protocol::Version::Minecraft_1_13_2){
 				const char* itemNames[] = {
 					"minecraft:air",
@@ -2688,6 +2692,268 @@ namespace mc{
 					RegisterItem(new Item(itemNames[id], id));
 				}
 
+			}else{
+				auto blocks = blockRegistry->getBlocks();
+				for(auto it = blocks.begin(); it != blocks.end(); it++){
+					block::BlockPtr block = it->second;
+					ItemPtr item = new Item(block->GetName(), block->GetType());
+					item->setBlock(block);
+					RegisterItem(item);
+				}
+				RegisterItem(new Item("minecraft:iron_shovel", 256 << 4));
+				RegisterItem(new Item("minecraft:iron_pickaxe", 257 << 4));
+				RegisterItem(new Item("minecraft:iron_axe", 258 << 4));
+				RegisterItem(new Item("minecraft:flint_and_steel", 259 << 4));
+				RegisterItem(new Item("minecraft:apple", 260 << 4));
+				RegisterItem(new Item("minecraft:bow", 261 << 4));
+				RegisterItem(new Item("minecraft:arrow", 262 << 4));
+				RegisterItem(new Item("minecraft:coal", 263 << 4));
+				RegisterItem(new Item("minecraft:coal", 263 << 4 | 1));
+				RegisterItem(new Item("minecraft:diamond", 264 << 4));
+				RegisterItem(new Item("minecraft:iron_ingot", 265 << 4));
+				RegisterItem(new Item("minecraft:gold_ingot", 266 << 4));
+				RegisterItem(new Item("minecraft:iron_sword", 267 << 4));
+				RegisterItem(new Item("minecraft:wooden_sword", 268 << 4));
+				RegisterItem(new Item("minecraft:wooden_shovel", 269 << 4));
+				RegisterItem(new Item("minecraft:wooden_pickaxe", 270 << 4));
+				RegisterItem(new Item("minecraft:wooden_axe", 271 << 4));
+				RegisterItem(new Item("minecraft:stone_sword", 272 << 4));
+				RegisterItem(new Item("minecraft:stone_shovel", 273 << 4));
+				RegisterItem(new Item("minecraft:stone_pickaxe", 274 << 4));
+				RegisterItem(new Item("minecraft:stone_axe", 275 << 4));
+				RegisterItem(new Item("minecraft:diamond_sword", 276 << 4));
+				RegisterItem(new Item("minecraft:diamond_shovel", 277 << 4));
+				RegisterItem(new Item("minecraft:diamond_pickaxe", 278 << 4));
+				RegisterItem(new Item("minecraft:diamond_axe", 279 << 4));
+				RegisterItem(new Item("minecraft:stick", 280 << 4));
+				RegisterItem(new Item("minecraft:bowl", 281 << 4));
+				RegisterItem(new Item("minecraft:mushroom_stew", 282 << 4));
+				RegisterItem(new Item("minecraft:golden_sword", 283 << 4));
+				RegisterItem(new Item("minecraft:golden_shovel", 284 << 4));
+				RegisterItem(new Item("minecraft:golden_pickaxe", 285 << 4));
+				RegisterItem(new Item("minecraft:golden_axe", 286 << 4));
+				RegisterItem(new Item("minecraft:string", 287 << 4));
+				RegisterItem(new Item("minecraft:feather", 288 << 4));
+				RegisterItem(new Item("minecraft:gunpowder", 289 << 4));
+				RegisterItem(new Item("minecraft:wooden_hoe", 290 << 4));
+				RegisterItem(new Item("minecraft:stone_hoe", 291 << 4));
+				RegisterItem(new Item("minecraft:iron_hoe", 292 << 4));
+				RegisterItem(new Item("minecraft:diamond_hoe", 293 << 4));
+				RegisterItem(new Item("minecraft:gold_hoe", 294 << 4));
+				RegisterItem(new Item("minecraft:wheat_seeds", 295 << 4));
+				RegisterItem(new Item("minecraft:wheat", 296 << 4));
+				RegisterItem(new Item("minecraft:bread", 297 << 4));
+				RegisterItem(new Item("minecraft:leather_helmet", 298 << 4));
+				RegisterItem(new Item("minecraft:leather_chestplate", 299 << 4));
+				RegisterItem(new Item("minecraft:leather_leggings", 300 << 4));
+				RegisterItem(new Item("minecraft:leather_boots", 301 << 4));
+				RegisterItem(new Item("minecraft:chainmail_helmet", 302 << 4));
+				RegisterItem(new Item("minecraft:chainmail_chestplate", 303 << 4));
+				RegisterItem(new Item("minecraft:chainmail_leggings", 304 << 4));
+				RegisterItem(new Item("minecraft:chainmail_boots", 305 << 4));
+				RegisterItem(new Item("minecraft:iron_helmet", 306 << 4));
+				RegisterItem(new Item("minecraft:iron_chestplate", 307 << 4));
+				RegisterItem(new Item("minecraft:iron_leggings", 308 << 4));
+				RegisterItem(new Item("minecraft:iron_boots", 309 << 4));
+				RegisterItem(new Item("minecraft:diamond_helmet", 310 << 4));
+				RegisterItem(new Item("minecraft:diamond_chestplate", 311 << 4));
+				RegisterItem(new Item("minecraft:diamond_leggings", 312 << 4));
+				RegisterItem(new Item("minecraft:diamond_boots", 313 << 4));
+				RegisterItem(new Item("minecraft:golden_helmet", 314 << 4));
+				RegisterItem(new Item("minecraft:golden_chestplate", 315 << 4));
+				RegisterItem(new Item("minecraft:golden_leggings", 316 << 4));
+				RegisterItem(new Item("minecraft:golden_boots", 317 << 4));
+				RegisterItem(new Item("minecraft:flint", 318 << 4));
+				RegisterItem(new Item("minecraft:porkchop", 319 << 4));
+				RegisterItem(new Item("minecraft:cooked_porkchop", 320 << 4));
+				RegisterItem(new Item("minecraft:painting", 321 << 4));
+				RegisterItem(new Item("minecraft:golden_apple", 322 << 4));
+				RegisterItem(new Item("minecraft:golden_apple", 322 << 4 | 1));
+				RegisterItem(new Item("minecraft:sign", 323 << 4));
+				RegisterItem(new Item("minecraft:wooden_door", 324 << 4));
+				RegisterItem(new Item("minecraft:bucket", 325 << 4));
+				RegisterItem(new Item("minecraft:water_bucket", 326 << 4));
+				RegisterItem(new Item("minecraft:lava_bucket", 327 << 4));
+				RegisterItem(new Item("minecraft:minecart", 328 << 4));
+				RegisterItem(new Item("minecraft:saddle", 329 << 4));
+				RegisterItem(new Item("minecraft:iron_door", 330 << 4));
+				RegisterItem(new Item("minecraft:redstone", 331 << 4));
+				RegisterItem(new Item("minecraft:snowball", 332 << 4));
+				RegisterItem(new Item("minecraft:boat", 333 << 4));
+				RegisterItem(new Item("minecraft:leather", 334 << 4));
+				RegisterItem(new Item("minecraft:milk_bucket", 335 << 4));
+				RegisterItem(new Item("minecraft:brick", 336 << 4));
+				RegisterItem(new Item("minecraft:clay_ball", 337 << 4));
+				RegisterItem(new Item("minecraft:reeds", 338 << 4));
+				RegisterItem(new Item("minecraft:paper", 339 << 4));
+				RegisterItem(new Item("minecraft:book", 340 << 4));
+				RegisterItem(new Item("minecraft:slime_ball", 341 << 4));
+				RegisterItem(new Item("minecraft:chest_minecart", 342 << 4));
+				RegisterItem(new Item("minecraft:furnace_minecart", 343 << 4));
+				RegisterItem(new Item("minecraft:egg", 344 << 4));
+				RegisterItem(new Item("minecraft:compass", 345 << 4));
+				RegisterItem(new Item("minecraft:fishing_rod", 346 << 4));
+				RegisterItem(new Item("minecraft:clock", 347 << 4));
+				RegisterItem(new Item("minecraft:glowstone_dust", 348 << 4));
+				RegisterItem(new Item("minecraft:fish", 349 << 4));
+				RegisterItem(new Item("minecraft:fish", 349 << 4 | 1));
+				RegisterItem(new Item("minecraft:fish", 349 << 4 | 2));
+				RegisterItem(new Item("minecraft:fish", 349 << 4 | 3));
+				RegisterItem(new Item("minecraft:cooked_fish", 350 << 4));
+				RegisterItem(new Item("minecraft:cooked_fish", 350 << 4 | 1));
+				RegisterItem(new Item("minecraft:dye", 351 << 4));
+				RegisterItem(new Item("minecraft:dye", 351 << 4 | 1));
+				RegisterItem(new Item("minecraft:dye", 351 << 4 | 2));
+				RegisterItem(new Item("minecraft:dye", 351 << 4 | 3));
+				RegisterItem(new Item("minecraft:dye", 351 << 4 | 4));
+				RegisterItem(new Item("minecraft:dye", 351 << 4 | 5));
+				RegisterItem(new Item("minecraft:dye", 351 << 4 | 6));
+				RegisterItem(new Item("minecraft:dye", 351 << 4 | 7));
+				RegisterItem(new Item("minecraft:dye", 351 << 4 | 8));
+				RegisterItem(new Item("minecraft:dye", 351 << 4 | 9));
+				RegisterItem(new Item("minecraft:dye", 351 << 4 | 10));
+				RegisterItem(new Item("minecraft:dye", 351 << 4 | 11));
+				RegisterItem(new Item("minecraft:dye", 351 << 4 | 12));
+				RegisterItem(new Item("minecraft:dye", 351 << 4 | 13));
+				RegisterItem(new Item("minecraft:dye", 351 << 4 | 14));
+				RegisterItem(new Item("minecraft:dye", 351 << 4 | 15));
+				RegisterItem(new Item("minecraft:bone", 352 << 4));
+				RegisterItem(new Item("minecraft:sugar", 353 << 4));
+				RegisterItem(new Item("minecraft:cake", 354 << 4));
+				RegisterItem(new Item("minecraft:bed", 355 << 4));
+				RegisterItem(new Item("minecraft:bed", 355 << 4 | 1));
+				RegisterItem(new Item("minecraft:bed", 355 << 4 | 2));
+				RegisterItem(new Item("minecraft:bed", 355 << 4 | 3));
+				RegisterItem(new Item("minecraft:bed", 355 << 4 | 4));
+				RegisterItem(new Item("minecraft:bed", 355 << 4 | 5));
+				RegisterItem(new Item("minecraft:bed", 355 << 4 | 6));
+				RegisterItem(new Item("minecraft:bed", 355 << 4 | 7));
+				RegisterItem(new Item("minecraft:bed", 355 << 4 | 8));
+				RegisterItem(new Item("minecraft:bed", 355 << 4 | 9));
+				RegisterItem(new Item("minecraft:bed", 355 << 4 | 10));
+				RegisterItem(new Item("minecraft:bed", 355 << 4 | 11));
+				RegisterItem(new Item("minecraft:bed", 355 << 4 | 12));
+				RegisterItem(new Item("minecraft:bed", 355 << 4 | 13));
+				RegisterItem(new Item("minecraft:bed", 355 << 4 | 14));
+				RegisterItem(new Item("minecraft:bed", 355 << 4 | 15));
+				RegisterItem(new Item("minecraft:repeater", 356 << 4));
+				RegisterItem(new Item("minecraft:cookie", 357 << 4));
+				RegisterItem(new Item("minecraft:filled_map", 358 << 4));
+				RegisterItem(new Item("minecraft:filled_map", 358 << 4 | 1));
+				RegisterItem(new Item("minecraft:filled_map", 358 << 4 | 2));
+				RegisterItem(new Item("minecraft:filled_map", 358 << 4 | 3));
+				RegisterItem(new Item("minecraft:filled_map", 358 << 4 | 4));
+				RegisterItem(new Item("minecraft:shears", 359 << 4));
+				RegisterItem(new Item("minecraft:melon", 360 << 4));
+				RegisterItem(new Item("minecraft:pumpkin_seeds", 361 << 4));
+				RegisterItem(new Item("minecraft:melon_seeds", 362 << 4));
+				RegisterItem(new Item("minecraft:beef", 363 << 4));
+				RegisterItem(new Item("minecraft:cooked_beef", 364 << 4));
+				RegisterItem(new Item("minecraft:chicken", 365 << 4));
+				RegisterItem(new Item("minecraft:cooked_chicken", 366 << 4));
+				RegisterItem(new Item("minecraft:rotten_flesh", 367 << 4));
+				RegisterItem(new Item("minecraft:ender_pearl", 368 << 4));
+				RegisterItem(new Item("minecraft:blaze_rod", 369 << 4));
+				RegisterItem(new Item("minecraft:ghast_tear", 370 << 4));
+				RegisterItem(new Item("minecraft:gold_nugget", 371 << 4));
+				RegisterItem(new Item("minecraft:nether_wart", 372 << 4));
+				RegisterItem(new Item("minecraft:potion", 373 << 4));
+				RegisterItem(new Item("minecraft:glass_bottle", 374 << 4));
+				RegisterItem(new Item("minecraft:spider_eye", 375 << 4));
+				RegisterItem(new Item("minecraft:fermented_spider_eye", 376 << 4));
+				RegisterItem(new Item("minecraft:blaze_powder", 377 << 4));
+				RegisterItem(new Item("minecraft:magma_cream", 378 << 4));
+				RegisterItem(new Item("minecraft:brewing_stand", 379 << 4));
+				RegisterItem(new Item("minecraft:cauldron", 380 << 4));
+				RegisterItem(new Item("minecraft:ender_eye", 381 << 4));
+				RegisterItem(new Item("minecraft:speckled_melon", 382 << 4));
+				RegisterItem(new Item("minecraft:spawn_egg", 383 << 4));
+				RegisterItem(new Item("minecraft:experience_bottle", 384 << 4));
+				RegisterItem(new Item("minecraft:fire_charge", 385 << 4));
+				RegisterItem(new Item("minecraft:writable_book", 386 << 4));
+				RegisterItem(new Item("minecraft:written_book", 387 << 4));
+				RegisterItem(new Item("minecraft:emerald", 388 << 4));
+				RegisterItem(new Item("minecraft:item_frame", 389 << 4));
+				RegisterItem(new Item("minecraft:flower_pot", 390 << 4));
+				RegisterItem(new Item("minecraft:carrot", 391 << 4));
+				RegisterItem(new Item("minecraft:potato", 392 << 4));
+				RegisterItem(new Item("minecraft:baked_potato", 393 << 4));
+				RegisterItem(new Item("minecraft:poisonous_potato", 394 << 4));
+				RegisterItem(new Item("minecraft:map", 395 << 4));
+				RegisterItem(new Item("minecraft:golden_carrot", 396 << 4));
+				RegisterItem(new Item("minecraft:skull", 397 << 4));
+				RegisterItem(new Item("minecraft:skull", 397 << 4 | 1));
+				RegisterItem(new Item("minecraft:skull", 397 << 4 | 2));
+				RegisterItem(new Item("minecraft:skull", 397 << 4 | 3));
+				RegisterItem(new Item("minecraft:skull", 397 << 4 | 4));
+				RegisterItem(new Item("minecraft:skull", 397 << 4 | 5));
+				RegisterItem(new Item("minecraft:carrot_on_a_stick", 398 << 4));
+				RegisterItem(new Item("minecraft:nether_star", 399 << 4));
+				RegisterItem(new Item("minecraft:pumpkin_pie", 400 << 4));
+				RegisterItem(new Item("minecraft:fireworks", 401 << 4));
+				RegisterItem(new Item("minecraft:firework_charge", 402 << 4));
+				RegisterItem(new Item("minecraft:enchanted_book", 403 << 4));
+				RegisterItem(new Item("minecraft:comparator", 404 << 4));
+				RegisterItem(new Item("minecraft:netherbrick", 405 << 4));
+				RegisterItem(new Item("minecraft:quartz", 406 << 4));
+				RegisterItem(new Item("minecraft:tnt_minecart", 407 << 4));
+				RegisterItem(new Item("minecraft:hopper_minecart", 408 << 4));
+				RegisterItem(new Item("minecraft:prismarine_shard", 409 << 4));
+				RegisterItem(new Item("minecraft:prismarine_crystals", 410 << 4));
+				RegisterItem(new Item("minecraft:rabbit", 411 << 4));
+				RegisterItem(new Item("minecraft:cooked_rabbit", 412 << 4));
+				RegisterItem(new Item("minecraft:rabbit_stew", 413 << 4));
+				RegisterItem(new Item("minecraft:rabbit_foot", 414 << 4));
+				RegisterItem(new Item("minecraft:rabbit_hide", 415 << 4));
+				RegisterItem(new Item("minecraft:armor_stand", 416 << 4));
+				RegisterItem(new Item("minecraft:iron_horse_armor", 417 << 4));
+				RegisterItem(new Item("minecraft:golden_horse_armor", 418 << 4));
+				RegisterItem(new Item("minecraft:diamond_horse_armor", 419 << 4));
+				RegisterItem(new Item("minecraft:lead", 420 << 4));
+				RegisterItem(new Item("minecraft:name_tag", 421 << 4));
+				RegisterItem(new Item("minecraft:command_block_minecart", 422 << 4));
+				RegisterItem(new Item("minecraft:mutton", 423 << 4));
+				RegisterItem(new Item("minecraft:cooked_mutton", 424 << 4));
+				RegisterItem(new Item("minecraft:banner", 425 << 4));
+				RegisterItem(new Item("minecraft:end_crystal", 426 << 4));
+				RegisterItem(new Item("minecraft:spruce_door", 427 << 4));
+				RegisterItem(new Item("minecraft:birch_door", 428 << 4));
+				RegisterItem(new Item("minecraft:jungle_door", 429 << 4));
+				RegisterItem(new Item("minecraft:acacia_door", 430 << 4));
+				RegisterItem(new Item("minecraft:dark_oak_door", 431 << 4));
+				RegisterItem(new Item("minecraft:chorus_fruit", 432 << 4));
+				RegisterItem(new Item("minecraft:chorus_fruit_popped", 433 << 4));
+				RegisterItem(new Item("minecraft:beetroot", 434 << 4));
+				RegisterItem(new Item("minecraft:beetroot_seeds", 435 << 4));
+				RegisterItem(new Item("minecraft:beetroot_soup", 436 << 4));
+				RegisterItem(new Item("minecraft:dragon_breath", 437 << 4));
+				RegisterItem(new Item("minecraft:splash_potion", 438 << 4));
+				RegisterItem(new Item("minecraft:spectral_arrow", 439 << 4));
+				RegisterItem(new Item("minecraft:tipped_arrow", 440 << 4));
+				RegisterItem(new Item("minecraft:lingering_potion", 441 << 4));
+				RegisterItem(new Item("minecraft:shield", 442 << 4));
+				RegisterItem(new Item("minecraft:elytra", 443 << 4));
+				RegisterItem(new Item("minecraft:spruce_boat", 444 << 4));
+				RegisterItem(new Item("minecraft:birch_boat", 445 << 4));
+				RegisterItem(new Item("minecraft:jungle_boat", 446 << 4));
+				RegisterItem(new Item("minecraft:acacia_boat", 447 << 4));
+				RegisterItem(new Item("minecraft:dark_oak_boat", 448 << 4));
+				RegisterItem(new Item("minecraft:totem_of_undying", 449 << 4));
+				RegisterItem(new Item("minecraft:shulker_shell", 450 << 4));
+				RegisterItem(new Item("minecraft:iron_nugget", 452 << 4));
+				RegisterItem(new Item("minecraft:knowledge_book", 453 << 4));
+				RegisterItem(new Item("minecraft:record_13", 2256 << 4));
+				RegisterItem(new Item("minecraft:record_cat", 2257 << 4));
+				RegisterItem(new Item("minecraft:record_blocks", 2258 << 4));
+				RegisterItem(new Item("minecraft:record_chirp", 2259 << 4));
+				RegisterItem(new Item("minecraft:record_far", 2260 << 4));
+				RegisterItem(new Item("minecraft:record_mall", 2261 << 4));
+				RegisterItem(new Item("minecraft:record_mellohi", 2262 << 4));
+				RegisterItem(new Item("minecraft:record_stal", 2263 << 4));
+				RegisterItem(new Item("minecraft:record_strad", 2264 << 4));
+				RegisterItem(new Item("minecraft:record_ward", 2265 << 4));
+				RegisterItem(new Item("minecraft:record_11", 2266 << 4));
+				RegisterItem(new Item("minecraft:record_wait", 2267 << 4));
 			}
 		}
 
