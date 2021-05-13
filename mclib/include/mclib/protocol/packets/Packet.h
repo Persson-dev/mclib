@@ -1557,7 +1557,7 @@ public:
 
 class SpawnPositionPacket : public InboundPacket { // 0x43
 private:
-    Position m_Location;
+    Position m_Location = GetProtocolVersion();
 
 public:
     MCLIB_API SpawnPositionPacket();
@@ -1860,7 +1860,7 @@ private:
     std::wstring m_Text;
     bool m_AssumeCommand;
     bool m_HasPosition;
-    Position m_LookingAt;
+    Position m_LookingAt = GetProtocolVersion();
 
 public:
     MCLIB_API TabCompletePacket(const std::wstring& text, bool assumeCommand);
@@ -2150,7 +2150,7 @@ public:
 
 class UpdateSignPacket : public OutboundPacket { // 0x19
 private:
-    Position m_Position;
+    Position m_Position = GetProtocolVersion();
     std::wstring m_Line1;
     std::wstring m_Line2;
     std::wstring m_Line3;

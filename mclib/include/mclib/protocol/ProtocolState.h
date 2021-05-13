@@ -24,6 +24,8 @@ enum class Version {
     Minecraft_1_12_2 = 340,
     Minecraft_1_13_2 = 404,
 
+	Minecraft_1_14_2 = 485,
+
     Minecraft_1_15_2 = 578,
 
 	Minecraft_1_16_4 = 754,

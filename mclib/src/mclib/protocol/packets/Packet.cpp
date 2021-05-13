@@ -170,7 +170,7 @@ namespace mc{
 				bool SpawnPaintingPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
 					VarInt eid;
 					MCString title;
-					Position position;
+					Position position(GetProtocolVersion());
 					u8 direction;
 
 					data >> eid >> m_UUID;
@@ -459,7 +459,7 @@ namespace mc{
 
 				bool BlockBreakAnimationPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
 					VarInt eid;
-					Position position;
+					Position position(GetProtocolVersion());
 
 					//data.SetReadOffset(0);
 
@@ -484,7 +484,7 @@ namespace mc{
 				}
 
 				bool UpdateBlockEntityPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
-					Position pos;
+					Position pos(GetProtocolVersion());
 					u8 action;
 
 					data >> pos;
@@ -509,7 +509,7 @@ namespace mc{
 				}
 
 				bool BlockActionPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
-					Position position;
+					Position position(GetProtocolVersion());
 					VarInt type;
 
 					data >> position >> m_ActionId >> m_ActionParam >> type;
@@ -531,7 +531,7 @@ namespace mc{
 				}
 
 				bool BlockChangePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
-					Position location;
+					Position location(GetProtocolVersion());
 					VarInt blockId;
 
 					data >> location >> blockId;
@@ -795,16 +795,23 @@ namespace mc{
 				}
 
 				bool OpenWindowPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
-					MCString type, title;
+					if(GetProtocolVersion() <= Version::Minecraft_1_13_2){
+						MCString type, title;
+						data >> m_WindowId >> type >> title >> m_SlotCount;
+						m_WindowType = type.GetUTF16();
+						m_WindowTitle = title.GetUTF16();
 
-					data >> m_WindowId >> type >> title >> m_SlotCount;
-
-					m_WindowType = type.GetUTF16();
-					m_WindowTitle = title.GetUTF16();
-
-					m_EntityId = 0;
-					if (m_WindowType.compare(L"EntityHorse") == 0)
-						data >> m_EntityId;
+						m_EntityId = 0;
+						if (m_WindowType.compare(L"EntityHorse") == 0)
+							data >> m_EntityId;
+					}else{
+						VarInt windowID, type;
+						MCString title;
+						data >> windowID >> type >> title;
+						m_WindowId = windowID.GetByte();
+						//m_WindowType = 
+						m_WindowTitle = title.GetUTF16();
+					}
 
 					return true;
 				}
@@ -1120,7 +1127,7 @@ namespace mc{
 
 				bool EffectPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
 					data >> m_EffectId;
-					Position pos;
+					Position pos(GetProtocolVersion());
 					data >> pos;
 
 					m_Position.x = pos.GetX();
@@ -1442,7 +1449,7 @@ namespace mc{
 				}
 
 				bool OpenSignEditorPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
-					Position position;
+					Position position(GetProtocolVersion());
 
 					data >> position;
 
@@ -1681,7 +1688,7 @@ namespace mc{
 
 				bool UseBedPacket::Deserialize(DataBuffer& data, std::size_t packetLength){
 					VarInt eid;
-					Position location;
+					Position location(GetProtocolVersion());
 
 					data >> eid >> location;
 
@@ -3113,7 +3120,7 @@ namespace mc{
 
 				DataBuffer PlayerDiggingPacket::Serialize() const{
 					DataBuffer buffer;
-					Position location((s32)m_Position.x, (s32)m_Position.y, (s32)m_Position.z);
+					Position location((s32)m_Position.x, (s32)m_Position.y, (s32)m_Position.z, GetProtocolVersion());
 
 					buffer << m_Id;
 					buffer << (u8)m_Status;
@@ -3202,7 +3209,7 @@ namespace mc{
 				UpdateSignPacket::UpdateSignPacket(Vector3d position, const std::wstring& line1, const std::wstring& line2,
 					const std::wstring& line3, const std::wstring& line4)
 					: m_Line1(line1), m_Line2(line2), m_Line3(line3), m_Line4(line4){
-					m_Position = Position((s32)position.x, (s32)position.y, (s32)position.z);
+					m_Position = Position((s32)position.x, (s32)position.y, (s32)position.z, GetProtocolVersion());
 				}
 
 				DataBuffer UpdateSignPacket::Serialize() const{
@@ -3254,7 +3261,7 @@ namespace mc{
 
 				DataBuffer PlayerBlockPlacementPacket::Serialize() const{
 					DataBuffer buffer;
-					Position location((s32)m_Position.x, (s32)m_Position.y, (s32)m_Position.z);
+					Position location((s32)m_Position.x, (s32)m_Position.y, (s32)m_Position.z, GetProtocolVersion());
 					VarInt face((u8)m_Face), hand((int)m_Hand);
 
 					buffer << m_Id;
