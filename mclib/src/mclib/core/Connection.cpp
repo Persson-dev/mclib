@@ -12,6 +12,7 @@
 #include <future>
 #include <thread>
 #include <memory>
+#include <iostream>
 
 namespace mc {
 namespace core {
@@ -336,7 +337,7 @@ void Connection::HandlePacket(protocol::packets::in::status::ResponsePacket* pac
     try {
         data = json::parse(response);
     } catch (json::parse_error&) {
-
+		throw;
     }
 
     NotifyListeners(&ConnectionListener::OnPingResponse, data);

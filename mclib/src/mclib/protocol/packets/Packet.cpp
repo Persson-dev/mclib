@@ -60,7 +60,13 @@ namespace mc{
 					m_EntityId = eid.GetInt();
 
 					data >> m_UUID;
-					data >> m_Type;
+                    if(GetProtocolVersion() < Version::Minecraft_1_14_2){
+					    data >> m_Type;
+                    }else{
+                        VarInt type;
+                        data >> type;
+                        m_Type = type.GetByte();
+                    }
 
 					double x, y, z;
 
@@ -1055,9 +1061,10 @@ namespace mc{
 
 					metadata.sectionmask = mask.GetInt();
 
-					nbt::NBT heightmaps;
-
-					data >> heightmaps;
+                    if(GetProtocolVersion() >= Version::Minecraft_1_14_2){
+					    nbt::NBT heightmaps;
+					    data >> heightmaps;
+                    }
 
 					if (GetProtocolVersion() > Version::Minecraft_1_15_2){
 
@@ -1073,10 +1080,10 @@ namespace mc{
 						}
 
 					}
-					else if (GetProtocolVersion() > Version::Minecraft_1_13_2 && metadata.continuous){
+					/*else if (GetProtocolVersion() == Version::Minecraft_1_13_2 && metadata.continuous){
 						// Skip biome data
 						data.SetReadOffset(data.GetReadOffset() + 1024 * sizeof(u32));
-					}
+					}*/
 
 					if (m_Connection)
 						metadata.skylight = m_Connection->GetDimension() == 0;
@@ -1106,12 +1113,12 @@ namespace mc{
 
 						data >> nbt;
 
-						block::BlockEntityPtr blockEntity = block::BlockEntity::CreateFromNBT(&nbt);
+						//block::BlockEntityPtr blockEntity = block::BlockEntity::CreateFromNBT(&nbt);
 
-						if (blockEntity == nullptr) continue;
+						//if (blockEntity == nullptr) continue;
 
-						m_BlockEntities.push_back(blockEntity);
-						m_ChunkColumn->AddBlockEntity(blockEntity);
+						//m_BlockEntities.push_back(blockEntity);
+						//m_ChunkColumn->AddBlockEntity(blockEntity);
 					}
 
 					return true;
@@ -1244,13 +1251,13 @@ namespace mc{
 							u64 hashedSeed;
 							data >> hashedSeed;
 						}
-						else{
+						else if(GetProtocolVersion() < Version::Minecraft_1_14_2){
 							data >> m_Difficulty;
 						}
 						data >> m_MaxPlayers;
 						data >> m_LevelType;
 
-						if (this->GetProtocolVersion() >= Version::Minecraft_1_15_2){
+						if (this->GetProtocolVersion() >= Version::Minecraft_1_14_2){
 							VarInt viewDistance;
 
 							data >> viewDistance;
@@ -3265,13 +3272,19 @@ namespace mc{
 					VarInt face((u8)m_Face), hand((int)m_Hand);
 
 					buffer << m_Id;
-					buffer << location;
-					buffer << face;
+                    if(GetProtocolVersion() >= Version::Minecraft_1_14_2){
+                        buffer << location;
+					    buffer << face;
+                    }
 					buffer << hand;
+                    if(GetProtocolVersion() < Version::Minecraft_1_14_2){
+                        buffer << location;
+					    buffer << face;
+                    }
 					buffer << m_CursorPos.x;
 					buffer << m_CursorPos.y;
 					buffer << m_CursorPos.z;
-					if(GetProtocolVersion() >= Version::Minecraft_1_16_5){
+					if(GetProtocolVersion() >= Version::Minecraft_1_14_2){
 						//to tell if we are in a block, false in most cases
 						buffer << false;
 					}

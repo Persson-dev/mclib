@@ -23,7 +23,7 @@ namespace mc{
 		}
 
 		void Chunk::Load(DataBuffer& in, ChunkColumnMetadata* meta, s32 chunkIndex, protocol::Version version){
-			if (version >= protocol::Version::Minecraft_1_15_2){
+			if (version >= protocol::Version::Minecraft_1_14_2){
 				u16 blockCount;
 
 				in >> blockCount;
