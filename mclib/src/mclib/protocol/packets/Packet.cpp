@@ -712,7 +712,7 @@ namespace mc{
 
 				bool MultiBlockChangePacket::Deserialize(DataBuffer& data, std::size_t packetLength){
 					//used in 1.16 protocol
-					s32 ChunkY;
+					s32 ChunkY = 0;
 
 					if (GetProtocolVersion() >= Version::Minecraft_1_16_5){
 						u64 ChunkSection;
@@ -720,6 +720,8 @@ namespace mc{
 						m_ChunkX = ChunkSection >> 42;
 						m_ChunkZ = ChunkSection << 22 >> 42;
 						ChunkY = ChunkSection << 44 >> 44;
+                        bool inverse;
+                        data >> inverse;
 					}
 					else{
 						data >> m_ChunkX >> m_ChunkZ;
@@ -742,6 +744,7 @@ namespace mc{
 							change.x = blockX;
 							change.z = blockZ;
 							change.y = ChunkY * 16 + blockY;
+                            change.blockData = blockID;
 
 							m_BlockChanges.push_back(change);
 						}
