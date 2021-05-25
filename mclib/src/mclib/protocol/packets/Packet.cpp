@@ -722,6 +722,11 @@ namespace mc{
 						ChunkY = ChunkSection << 44 >> 44;
                         bool inverse;
                         data >> inverse;
+
+                        if(m_ChunkX >= std::pow(2, 21))
+                            m_ChunkX -= std::pow(2, 22);
+                        if(m_ChunkZ >= std::pow(2, 21))
+                            m_ChunkZ -= std::pow(2, 22);
 					}
 					else{
 						data >> m_ChunkX >> m_ChunkZ;
